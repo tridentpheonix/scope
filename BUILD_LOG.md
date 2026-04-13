@@ -88,6 +88,8 @@
 - Verified the full browser smoke on `http://localhost:3001`: the extraction-review live result card showed `Provider: NVIDIA`, the saved history card showed `NVIDIA`, and the proposal-pack live result/history cards also showed `NVIDIA`.
 - Re-ran `pnpm build` successfully after the auth-session cleanup; the only remaining note is the existing Next.js dynamic cookies warning on `/risk-check`.
 - Added launch handoff notes in `docs/launch-handoff.md` covering environment setup, smoke verification, launch checklist, and the remaining GA handoff notes.
+- Pushed the current state to `https://github.com/tridentpheonix/scope.git` on `main` with commit `3155eef` and deployed it to Vercel at `https://scopeos-ghpush.vercel.app`.
+- Verified the live Vercel deployment returns HTTP 200 at the production URL.
 - Wrote the GA polish plan into the project memory files, then shipped a signed-in workspace launchpad on the home page with next-best-action guidance and recent-deal shortcuts.
 - Tightened the saved-deals empty state so first-run users get a clearer next step back to the launchpad and the first brief.
 - Verified the live local homepage at `http://localhost:3001/` now renders the signed-in workspace launchpad.

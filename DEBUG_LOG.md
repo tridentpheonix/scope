@@ -13,3 +13,4 @@
 - Debugged Next.js cookie/session behavior until the smoke flow could persist a usable browser session in development without any bypass flag.
 - Re-ran the browser smoke after the auth-session fix and confirmed the full route path passed end to end.
 - Wrote launch handoff notes into `docs/launch-handoff.md` so the next step is billing edge-case cleanup plus final GA handoff polish.
+- Confirmed the current state was pushed to GitHub and deployed to Vercel, then verified the live deployment responds with HTTP 200.

@@ -3,7 +3,7 @@
 - **Project:** ScopeOS
 - **Baton Holder:** codex
 - **Current Goal:** turn ScopeOS from MVP-complete into a GA-polished product with strong onboarding, reliable execution, observable AI usage, and a clean path to paid users.
-- **Current Branch / State:** local workspace, production-style Next.js app running with Neon + Stripe + NVIDIA-compatible AI paths already wired; the old smoke-test bypass helper has been removed and browser QA now uses a real-auth dev session cookie flow.
+- **Current Branch / State:** local workspace plus pushed GitHub repo and live Vercel deployment; production-style Next.js app running with Neon + Stripe + NVIDIA-compatible AI paths already wired; the old smoke-test bypass helper has been removed and browser QA now uses a real-auth dev session cookie flow.
 
 ## What Changed Since Last Handoff
 - MVP workflow is in place for risk check, extraction review, proposal pack generation, saved deals, branded export, billing, and AI provider tracking.
@@ -15,6 +15,7 @@
 - Structured diagnostics now log intake, AI, billing, and webhook failures in a consistent JSON shape.
 - A lightweight AI evaluation harness now runs fallback and live NVIDIA-backed checks across representative concierge cases and reports prompt/model regressions from a single CLI command.
 - Launch handoff notes now live in `docs/launch-handoff.md` with env, smoke, verification, and launch checklist guidance.
+- The current state has been pushed to `https://github.com/tridentpheonix/scope.git` and deployed to Vercel at `https://scopeos-ghpush.vercel.app`.
 
 ## GA Milestones
 1. **Product shell polish**
