@@ -9,7 +9,12 @@
 /coverage
 
 # local env
-.env*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
 
 # runtime data for concierge submissions
 /data/risk-check-submissions.ndjson
