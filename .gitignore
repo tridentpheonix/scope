@@ -15,6 +15,7 @@
 /data/risk-check-submissions.ndjson
 /data/events.ndjson
 /data/export-blockers.ndjson
+/data/diagnostics.ndjson
 /data/uploads/*
 !/data/uploads/.gitkeep
 /data/extraction-reviews/*
@@ -27,3 +28,5 @@
 # misc
 .DS_Store
 *.log
+
+.vercel
