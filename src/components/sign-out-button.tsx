@@ -1,0 +1,45 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
+
+export function SignOutButton() {
+  const router = useRouter();
+  const [isBusy, setIsBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function handleSignOut() {
+    setStatus(null);
+    setIsBusy(true);
+
+    try {
+      await authClient.signOut();
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("auth_sign_out_failed", error);
+      setStatus("Could not sign out right now. Please retry.");
+      setIsBusy(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-2">
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="btn btn-outline"
+        disabled={isBusy}
+      >
+        {isBusy ? "Signing out..." : "Sign out"}
+      </button>
+      {status ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {status}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+

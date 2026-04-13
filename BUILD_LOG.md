@@ -1,0 +1,97 @@
+# BUILD_LOG
+
+## 2026-04-10
+- Initialized ScopeOS project brief and operating files.
+- Locked the initial product thesis: messy brief in, scoped commercial package out.
+- Chose margin protection and scope clarity as the primary wedge over general proposal styling.
+- Created `PRD.md` for ScopeOS and narrowed v1 to SMB brochure/marketing website redesign proposals for small web design agencies.
+- Locked the first-value moment as: discovery transcript or brief in -> risk-reviewed proposal pack out, with assumptions and exclusions visible before pricing.
+- Updated `PRD.md` to align with the global/workspace AGENTS rules by adding explicit v1 requirements for input validation, retry/failure states, event logging, edit preservation, and deletable client materials.
+- Added a phased delivery map inside `PRD.md` and created `phases/phase-01` through `phase-05` documentation folders, each with `artifacts.md` and `design.md` for implementation-ready handoff.
+- Scaffolded a Next.js + TypeScript + Tailwind app in the project root with a founder-facing landing page and a dedicated `/risk-check` intake route.
+- Added shared validation logic, a file-backed intake API for concierge submissions, and Vitest coverage for the core risk-check schema and attachment validation.
+- Verified the app with `pnpm lint`, `pnpm test`, and `pnpm build`.
+- Refactored the intake POST logic into a reusable `risk-check-service` so route handling and concierge tests share the same validation and persistence path.
+- Added three realistic SMB website redesign concierge cases plus fixture briefs under `concierge-tests/` and documented the findings in `concierge-tests/REPORT.md`.
+- Verified the three realistic concierge cases with isolated temp storage and re-ran `pnpm lint`, `pnpm test`, and `pnpm build` successfully.
+
+## 2026-04-11
+- Added a deterministic web-design analysis layer in `src/lib/risk-check-analysis.ts` to convert each brief into stored missing-info prompts, risk flags, internal prompt guidance, and three-tier pricing posture.
+- Updated the intake persistence flow so each saved submission now carries its internal scoping analysis, with backward-compatible read logic for older saved submissions.
+- Updated `/api/risk-check` and the success state in `src/components/risk-check-form.tsx` so a submitter immediately sees an internal scope preview, top pricing questions, and main risk flags after submission.
+- Added Vitest coverage for the analysis layer and re-verified the full app with `pnpm lint`, `pnpm test`, and `pnpm build`.
+- Added `src/lib/proposal-pack.ts` plus `src/app/proposal-pack/[id]/page.tsx` to generate a first proposal-pack draft route from saved intake data and stored scope analysis.
+- Added `src/components/proposal-pack-editor.tsx` with editable client-facing blocks, copy/export actions, browser-local autosave, and a separate internal-notes side panel for founder review.
+- Added proposal-pack tests and updated the intake success state so a user can jump directly from a submitted brief into the editable proposal draft workspace.
+- Added `src/lib/extraction-review.ts` plus `src/app/extraction-review/[id]/page.tsx` to create a dedicated review step between intake and proposal-pack generation.
+- Added `src/components/extraction-review-editor.tsx` so founders can edit internal scope summary, pricing posture, open questions, risk framing, and assumptions before continuing.
+- Updated the proposal-pack editor to apply extraction-review overrides from browser storage and re-verified the app with `pnpm lint`, `pnpm test`, and `pnpm build`.
+- Added `src/lib/agency-defaults.ts` so ScopeOS now ships concrete default guardrails for deposits, revision rounds, and change-order rates based on website-project complexity.
+- Added `src/lib/proposal-pack-storage.ts` plus `src/app/api/proposal-pack/[id]/route.ts` to persist client-facing proposal-pack edits to the workspace data folder.
+- Updated the proposal-pack route/editor so server-saved client blocks reload automatically, while internal scoping notes remain separate from exported client-facing content.
+- Added workspace-safe runtime storage for proposal-pack drafts under `data/proposal-packs/` and added test coverage for storage persistence before re-running `pnpm lint`, `pnpm test`, and `pnpm build`.
+- Added `src/lib/extraction-review-storage.ts` plus `src/app/api/extraction-review/[id]/route.ts` so internal extraction-review edits now persist to the workspace and survive across browsers/devices.
+- Updated the extraction-review screen to load saved workspace reviews, keep a browser backup only as a fallback, and autosave review edits before proposal generation.
+- Added `src/app/deals/page.tsx` plus `src/lib/saved-deals.ts` to create a lightweight saved-deals workspace view that reopens intake, review, and proposal draft work without requiring manual submission IDs.
+- Resolved the MVP export-path question in product docs and UI: copy full pack + markdown remain the first paid export flow, while branded Google Docs/PDF export stays deferred until paid users say formatting is the blocker.
+- Added storage/list tests for extraction reviews and saved deals, then re-ran `pnpm lint`, `pnpm test`, `pnpm build`, and localhost smoke checks for `/risk-check`, `/deals`, and `/api/extraction-review/test-id`.
+- Added `src/app/api/events/route.ts` plus `src/lib/analytics.ts` to persist proposal-pack analytics events (open, save, copy, download) to `data/events.ndjson`.
+- Added `src/lib/change-order.ts`, `src/lib/change-order-storage.ts`, and `src/app/api/change-order/[id]/route.ts` so scope drift items can be captured and autosaved to workspace change-order drafts.
+- Added `src/lib/proposal-memory.ts` and wired proposal memory into the proposal-pack editor so founders can reuse assumptions, exclusions, and commercial terms from prior deals.
+- Expanded the proposal-pack editor to include analytics tracking, proposal memory actions, and a scope drift/change-order panel with copy-ready draft output.
+- Added tests for change-order storage and proposal memory, updated runtime data ignores, and re-ran `pnpm lint`, `pnpm test`, and `pnpm build` successfully.
+- Added `src/lib/analytics-storage.ts` plus `src/app/analytics/page.tsx` for a founder-friendly analytics dashboard summarizing proposal-pack usage.
+- Added `src/lib/export-blocker-storage.ts` plus `src/app/api/export-blocker/route.ts` and a small in-dashboard form to record paid-user branded-export blockers.
+- Added `src/lib/deal-deletion.ts` plus `src/app/api/deals/[id]/route.ts` and UI delete controls on saved deals to remove sensitive client material across all workspace files.
+- Added tests for export-blocker storage and deal deletion, updated data ignore rules, and re-ran `pnpm lint`, `pnpm test`, and `pnpm build` successfully.
+
+## 2026-04-12
+- Added niche-specific clause packs (Webflow build, WordPress migration, SEO + analytics) with a one-click apply panel in the proposal-pack editor that appends assumptions, exclusions, and commercial terms safely.
+- Added clause-pack unit tests to ensure packs append once and avoid duplication.
+- Added intake-level deletion controls on the post-submit success panel so founders can remove sensitive briefs immediately.
+- Added proposal-pack deletion controls in the editor sidebar with local cleanup + redirect to saved deals after deletion.
+- Added branded export support by generating a styled HTML proposal pack with list formatting and client-ready print-to-PDF support from the editor.
+- Updated proposal-pack UI, analytics copy, and feedback form language to reflect branded export availability.
+- Added light/dark branded export theme toggle in the proposal pack editor with theme-aware HTML output.
+- Expanded branded export feedback capture with outcome + theme preference + next-step fields to inform further export work.
+- Added Neon environment helpers, schema bootstrap, and workspace billing records so ScopeOS can store authenticated workspace data in Neon Postgres.
+- Added Neon Auth server/client wiring with sign-in page, auth API route, protected middleware, and workspace/account-aware site navigation.
+- Added public `/pricing` and protected `/account` pages plus a `.env.example` file so the auth + billing stack is setup-ready for local and hosted environments.
+- Added Stripe checkout, billing portal, and webhook handlers for Solo/Team subscriptions, including workspace plan updates from Stripe events.
+- Added paid-plan gating so free workspaces keep the core proposal flow while Solo/Team unlock saved deal history, branded export, and analytics.
+- Implemented a premium Design System in `src/app/index.css` featuring Outfit/Inter typography, glassmorphism, smooth transitions, and standardized button variants.
+- Overhauled the Landing Page for a "wow" first impression with a sleek dark-mode-first aesthetic, floating header, and high-contrast typography.
+- Standardized all interactive surfaces (Intake, Review, Proposal Editor, Account, Pricing, Auth) using a global `.btn` class system for consistent visual hierarchy.
+- Re-tested the full app with `pnpm build` to ensure the new CSS architecture did not introduce regressions.
+
+## 2026-04-13
+- Created real Stripe test monthly prices for the Solo and Team plans, wired their IDs into the local environment, and corrected the local base URL to `http://localhost:3000` for checkout redirects.
+- Ran a full authenticated smoke test against the local app: Neon Auth sign-up produced a valid session cookie, `/api/billing/checkout` returned a live Stripe Checkout URL, and `/api/billing/portal` returned a live Stripe billing-portal URL.
+- Added webhook sync fallback logic so checkout-completed events can persist the plan from session metadata even when subscription expansion is unavailable.
+- Added the Stripe price ID to checkout and subscription metadata, then verified live webhook handling with signed test events: `customer.subscription.created` and `checkout.session.completed` both updated the workspace in Neon, including plan, status, subscription ID, and price ID.
+- Added the first AI-assisted extraction-review slice: a provider-agnostic structured-output helper, a Neon-backed AI run log table, an authenticated AI review API route, and a review-editor panel that can apply AI suggestions back into the draft.
+- Added a focused test for the AI helper fallback and structured LLM path, then re-ran targeted lint, Vitest, and `pnpm build` after fixing an unrelated `src/scripts/test-db.ts` type-check issue.
+- Added the first AI-assisted proposal-pack slice: a structured rewrite helper for client-facing proposal blocks, a Neon-backed AI route/log path, and a proposal-pack editor panel with one-click apply behavior.
+- Added a focused test for the proposal-pack AI fallback and structured LLM path, then re-ran targeted lint, Vitest, and `pnpm build` successfully.
+- Added reusable AI run history for both extraction-review and proposal-pack flows, plus a shared read route backed by Neon so the latest saved AI rewrite can be restored later.
+- Re-ran targeted lint and `pnpm build` successfully after wiring the history panels into both editors.
+- Added NVIDIA API support by introducing NVIDIA-specific env vars, a shared provider resolver, and provider-resolution tests so ScopeOS can use `NVIDIA_API_KEY` / `NVIDIA_MODEL` without giving up the existing OpenAI-compatible fallback path.
+- Ran a live NVIDIA chat-completions smoke test against `integrate.api.nvidia.com/v1`; the API returned structured JSON in `reasoning_content`, so the shared AI parser now falls back to that field when `content` is empty.
+- Re-ran targeted lint, Vitest, and `pnpm build` successfully after the NVIDIA parser fix.
+- Surfaced the active AI provider in both AI panels and persisted the provider name in each AI run payload so the UI can show whether NVIDIA or fallback handled the generation.
+- Exposed the provider label in saved-run history cards too, so older AI generations keep the same explainability as the live result card.
+- Swapped raw provider slugs for product-friendly labels in the AI UI so results now read as NVIDIA/OpenAI/Fallback instead of `nvidia`/`openai`.
+- Added a 60-second timeout to the shared AI fetch path so live NVIDIA requests fail fast instead of hanging a browser smoke test indefinitely.
+- Replaced the old smoke-test bypass helper with a real Neon Auth sign-up/sign-in flow plus a dev-only local session cookie, keeping browser QA working without a hidden auth shortcut.
+- Added the Neon Auth handler route plus a local `/api/auth/session` helper so the browser smoke can create a real user session and revisit protected pages in development.
+- Re-ran the browser smoke successfully on the real-auth flow and confirmed the app reaches launchpad -> risk-check -> extraction-review -> proposal-pack -> launchpad without the bypass helper.
+- Verified the full browser smoke on `http://localhost:3001`: the extraction-review live result card showed `Provider: NVIDIA`, the saved history card showed `NVIDIA`, and the proposal-pack live result/history cards also showed `NVIDIA`.
+- Re-ran `pnpm build` successfully after the auth-session cleanup; the only remaining note is the existing Next.js dynamic cookies warning on `/risk-check`.
+- Added launch handoff notes in `docs/launch-handoff.md` covering environment setup, smoke verification, launch checklist, and the remaining GA handoff notes.
+- Wrote the GA polish plan into the project memory files, then shipped a signed-in workspace launchpad on the home page with next-best-action guidance and recent-deal shortcuts.
+- Tightened the saved-deals empty state so first-run users get a clearer next step back to the launchpad and the first brief.
+- Verified the live local homepage at `http://localhost:3001/` now renders the signed-in workspace launchpad.
+- Added a repo-owned browser smoke script under `scripts/browser-smoke.js` plus a `pnpm smoke:browser` command; it creates its own brief and verifies the launchpad, review, proposal, and return-to-launchpad path.
+- Added structured diagnostic logging helpers and wired them into intake, AI, billing, and Stripe webhook failure paths so the most important errors are visible in JSON form and persisted locally.
+- Added a lightweight AI evaluation harness (`src/lib/ai-evaluation.ts`) plus a `tsx` CLI runner that loads `.env` / `.env.local`, evaluates fallback and live NVIDIA-backed extraction/proposal cases, and prints a structured report.
+- Verified the AI eval harness with Vitest, then ran the CLI in fallback-only mode and against the live NVIDIA provider; both passed on the three representative concierge cases.

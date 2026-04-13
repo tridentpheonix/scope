@@ -1,0 +1,17 @@
+PROJECT: GreenSpace Landscaping One-Pager
+SOURCE: Briefing Document
+
+Overview:
+Small landing page for a local landscaping business. 
+
+Details:
+- Just one single page with sections for About, Services, and Contact.
+- All photography is professional and ready in a shared Google Drive folder.
+- The client has already written and professionally proofed all copy.
+- No migration needed; this is a brand new site on a fresh domain.
+- Simple contact form going to the client's email.
+- No specific launch deadline; they are currently using a Facebook page and are in no rush.
+
+RISKS TO FLAG:
+- Should result in "Low Risk" / "High Pricing Confidence"
+- No migration, integrations, or content risks detected.

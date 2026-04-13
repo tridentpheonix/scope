@@ -1,0 +1,20 @@
+Client: Mid-market industrial parts distributor
+Current stack: WordPress with an outdated theme and a blog that may or may not stay
+Requested outcome: clearer positioning, case studies, stronger lead capture, cleaner design
+
+Notes from sales call:
+- They want around 7 pages but also mentioned a resource section if it fits the budget
+- Need updated homepage, about, industries, capabilities, 2 case study pages, contact
+- They said "keep the blog if it is easy" but nobody defined whether migration is in scope
+- Marketing manager asked if forms can stay in HubSpot
+- Team wants launch in 6 weeks for a distributor event
+- Copy is not written yet and they are not sure who owns it
+- Existing photography is old and may need replacement
+- They like clean B2B sites and want something that feels more premium
+
+Risks heard but not resolved:
+- copy ownership
+- blog migration effort
+- CRM form embed details
+- photography responsibility
+- revision boundaries before launch

@@ -1,0 +1,19 @@
+Client: Regional HVAC company
+Current stack: Wix
+Requested outcome: move to Webflow, look more premium, support summer advertising push
+
+Founder notes:
+- Wants homepage, about, financing page, contact, review highlights, service pages, and location pages
+- Likes animation but wants the site to stay easy to edit
+- Wants quote requests to feel more prominent
+- Mentioned that online reviews should be shown throughout the site
+- Thinks the content "mostly exists" but has not shared a finished draft
+- Photo quality is mixed across jobs
+- Expects quick feedback cycles but has not agreed to a specific number of revision rounds
+- May want automations after launch if budget allows
+
+Risks heard but not resolved:
+- final page count could expand
+- revision rounds not defined
+- asset readiness unclear
+- post-launch automation requests could create scope drift

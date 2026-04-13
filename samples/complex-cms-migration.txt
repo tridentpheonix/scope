@@ -1,0 +1,19 @@
+PROJECT: Global Tech Pulse Wordpress to Webflow Migration
+SOURCE: RFP Excerpt
+
+We are looking to migrate our current WordPress marketing site to Webflow. The current site has grown messy over 5 years.
+
+Requirements:
+- Migrate approximately 80 existing blog posts. We need to keep our SEO rankings, so redirect handling is critical.
+- We have HubSpot integrated for our main intake forms on 5 different service pages. We need to make sure the data still flows correctly.
+- The new design needs to be "accessible" and "ADA compliant" because we have many government-adjacent clients.
+- We have a lot of plugins on the current WP site (MemberPress, Yoast, some custom ones for a review section). We need to figure out how to replicate that functionality.
+- We might need some post-launch support and training for our internal team to manage the new site.
+
+RISKS TO FLAG:
+- High migration volume (80+ blog posts)
+- SEO protection needs (rankings/redirects)
+- Technical integrations (HubSpot/CRM)
+- Compliance requirements (ADA/Accessibility)
+- Plugin replacement complexity (MemberPress/Review section)
+- Post-launch support expectations (training/maintenance)

@@ -1,0 +1,29 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next
+/out
+
+# testing
+/coverage
+
+# local env
+.env*
+
+# runtime data for concierge submissions
+/data/risk-check-submissions.ndjson
+/data/events.ndjson
+/data/export-blockers.ndjson
+/data/uploads/*
+!/data/uploads/.gitkeep
+/data/extraction-reviews/*
+!/data/extraction-reviews/.gitkeep
+/data/change-orders/*
+!/data/change-orders/.gitkeep
+/data/proposal-packs/*
+!/data/proposal-packs/.gitkeep
+
+# misc
+.DS_Store
+*.log

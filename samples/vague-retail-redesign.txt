@@ -1,0 +1,20 @@
+PROJECT: Hometown Hardware Website Refresh
+SOURCE: Discovery Call Notes - April 10
+
+The client wants to "modernize" their current site. They mentioned it feels "clunky" and "old."
+
+Key notes:
+- They have about 20 pages right now but might want to add more, like individual location pages for their 3 stores. 
+- They aren't sure who is going to write the new copy yet. Maybe their niece who does social media? Or we can just "tweak" what they already have.
+- They have some photos but said some are "just okay" and they might need to take new ones later.
+- Mentioned they might want a "form or something" so people can request quotes for lawn mowers.
+- They hope to have it done in about six weeks before their big summer referral campaign starts.
+- "We are easy to work with, just give us some quick feedback and we can iterate fast. We don't need a formal review process, just send us some edits."
+
+RISKS TO FLAG:
+- Vague page count (location pages expansion)
+- Unclear copy ownership (niece vs tweaking)
+- Asset readiness (mixed quality photos)
+- Hidden integration (quote request form)
+- Timeline pressure (six weeks/campaign deadline)
+- Loose revision boundaries (quick feedback/no formal review)
