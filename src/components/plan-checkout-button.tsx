@@ -14,6 +14,18 @@ export function PlanCheckoutButton({ planKey, label, isCurrent, className }: Pla
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function getCheckoutErrorMessage(status: number, message?: string) {
+    if (status === 401) {
+      return "Your session expired. Sign in again, then retry checkout.";
+    }
+
+    if (message) {
+      return message;
+    }
+
+    return "Failed to start checkout. Check Stripe config.";
+  }
+
   async function startCheckout() {
     setIsBusy(true);
     setError(null);
@@ -26,16 +38,19 @@ export function PlanCheckoutButton({ planKey, label, isCurrent, className }: Pla
         },
         body: JSON.stringify({ planKey }),
       });
-      const result = (await response.json()) as { ok: boolean; url?: string; message?: string };
+      const contentType = response.headers.get("content-type") ?? "";
+      const result = contentType.includes("application/json")
+        ? ((await response.json()) as { ok: boolean; url?: string; message?: string })
+        : null;
 
-      if (!response.ok || !result.ok || !result.url) {
-        throw new Error(result.message ?? "Checkout failed.");
+      if (!response.ok || !result?.ok || !result.url) {
+        throw new Error(getCheckoutErrorMessage(response.status, result?.message));
       }
 
       window.location.href = result.url;
     } catch (err) {
       console.error("plan_checkout_failed", err);
-      setError("Failed to start checkout. Check Stripe config.");
+      setError(err instanceof Error ? err.message : "Failed to start checkout. Check Stripe config.");
       setIsBusy(false);
     }
   }

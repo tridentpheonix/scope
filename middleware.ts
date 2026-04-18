@@ -29,6 +29,5 @@ export const config = {
     "/api/deals/:path*",
     "/api/events",
     "/api/export-blocker",
-    "/api/billing/:path*",
   ],
 };
