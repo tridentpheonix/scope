@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 
 export function SignOutButton() {
@@ -17,7 +16,6 @@ export function SignOutButtonInner({
   className,
   label = "Sign out",
 }: SignOutButtonInnerProps) {
-  const router = useRouter();
   const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -41,8 +39,7 @@ export function SignOutButtonInner({
       }
     }
 
-    router.push("/");
-    router.refresh();
+    window.location.replace("/?signed_out=1");
   }
 
   return (

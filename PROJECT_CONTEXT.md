@@ -3,7 +3,7 @@
 - **Project:** ScopeOS
 - **Baton Holder:** codex
 - **Current Goal:** Fix the live auth/session mismatch behind the pricing checkout failure and protected-route redirect loops, then publish and verify the deployment.
-- **Current Branch / State:** local workspace updated; production-style Next.js app already exists with Neon + Stripe + AI paths wired, schema management runs through explicit Neon migrations, client uploads no longer live in Postgres by default, maintenance diagnostics ship to an optional webhook sink, the code builds cleanly, pilot feedback intake is available at `/feedback`, and the auth flow now prefers authoritative Neon session reads, and authenticated headers now expose a visible sign-out control with a local cookie-clearing fallback when upstream Neon sign-out rejects the origin.
+- **Current Branch / State:** local workspace updated; production-style Next.js app already exists with Neon + Stripe + AI paths wired, schema management runs through explicit Neon migrations, client uploads no longer live in Postgres by default, maintenance diagnostics ship to an optional webhook sink, the code builds cleanly, pilot feedback intake is available at `/feedback`, and the auth flow now prefers authoritative Neon session reads, and authenticated headers now expose a visible sign-out control with a local cookie-clearing fallback when upstream Neon sign-out rejects the origin, plus a hard post-sign-out reload to prevent stale header state.
 
 ## What Changed Since Last Handoff
 - `.env.example` was scrubbed so no secret-looking values remain in the committed sample file and now includes `BLOB_READ_WRITE_TOKEN` as a placeholder.
@@ -77,5 +77,6 @@
 ## Commands Run + Results
 - Ran `pnpm exec eslint src/lib/auth/server.ts src/components/auth-panel.tsx src/app/auth/sign-in/page.tsx src/app/pricing/page.tsx src/app/account/page.tsx src/components/site-header.tsx --max-warnings=0` successfully.
 - Ran `pnpm build` successfully.
+
 
 

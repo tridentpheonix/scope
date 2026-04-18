@@ -48,3 +48,7 @@
 
 - Investigated the live sign-out 403 and found Neon Auth is rejecting the origin on /api/auth/sign-out; added a local fallback route that clears the auth cookies so users can still recover from a bad session.
 
+- Verified via a fresh live request that /pricing already renders the unauthenticated header correctly; the remaining issue was stale client state immediately after sign-out plus an over-emphasized header sign-out button.
+- Updated the sign-out button to do a hard navigation (window.location.replace) after clearing auth state so the next page load always re-renders from fresh server auth.
+- Reordered the header actions so the primary CTA stays first and the sign-out control becomes a lighter secondary action.
+

@@ -89,3 +89,4 @@
 - [S37] turned the AI provider labels into friendly product-facing names so the UI reads as NVIDIA/OpenAI/Fallback instead of raw slugs.
 
 
+
