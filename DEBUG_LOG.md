@@ -46,3 +46,5 @@
 
 - Added a visible header-level sign-out control so users can clear a bad session without first reaching the account page.
 
+- Investigated the live sign-out 403 and found Neon Auth is rejecting the origin on /api/auth/sign-out; added a local fallback route that clears the auth cookies so users can still recover from a bad session.
+

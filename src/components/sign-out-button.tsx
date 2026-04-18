@@ -27,13 +27,22 @@ export function SignOutButtonInner({
 
     try {
       await authClient.signOut();
-      router.push("/");
-      router.refresh();
     } catch (error) {
       console.error("auth_sign_out_failed", error);
-      setStatus("Could not sign out right now. Please retry.");
-      setIsBusy(false);
+
+      const fallbackResponse = await fetch("/api/auth/local-sign-out", {
+        method: "POST",
+      }).catch(() => null);
+
+      if (!fallbackResponse?.ok) {
+        setStatus("Could not sign out right now. Please retry.");
+        setIsBusy(false);
+        return;
+      }
     }
+
+    router.push("/");
+    router.refresh();
   }
 
   return (

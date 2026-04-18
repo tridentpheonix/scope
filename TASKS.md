@@ -88,3 +88,4 @@
 - [S36] exposed the AI provider in the saved-run history cards as well, so past generations remain explainable after refresh.
 - [S37] turned the AI provider labels into friendly product-facing names so the UI reads as NVIDIA/OpenAI/Fallback instead of raw slugs.
 
+
