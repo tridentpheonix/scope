@@ -21,7 +21,11 @@ export async function getCurrentSession() {
     return await getDevSessionFromCookie();
   }
 
-  const { data: session } = await auth.getSession();
+  const { data: session } = await auth.getSession({
+    query: {
+      disableCookieCache: "true",
+    },
+  });
   return session ?? (await getDevSessionFromCookie());
 }
 

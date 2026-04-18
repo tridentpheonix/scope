@@ -2,8 +2,8 @@
 
 - **Project:** ScopeOS
 - **Baton Holder:** codex
-- **Current Goal:** Post-launch preparation is documented and wired into the app with a pilot feedback inbox; the release-polish pass remains verified with targeted tests and a production build.
-- **Current Branch / State:** local workspace updated; production-style Next.js app already exists with Neon + Stripe + AI paths wired, schema management runs through explicit Neon migrations, client uploads no longer live in Postgres by default, maintenance diagnostics ship to an optional webhook sink, the code builds cleanly, and pilot feedback intake is available at `/feedback`.
+- **Current Goal:** Fix the live auth/session mismatch behind the pricing checkout failure and protected-route redirect loops, then publish and verify the deployment.
+- **Current Branch / State:** local workspace updated; production-style Next.js app already exists with Neon + Stripe + AI paths wired, schema management runs through explicit Neon migrations, client uploads no longer live in Postgres by default, maintenance diagnostics ship to an optional webhook sink, the code builds cleanly, pilot feedback intake is available at `/feedback`, and the auth flow now prefers authoritative Neon session reads.
 
 ## What Changed Since Last Handoff
 - `.env.example` was scrubbed so no secret-looking values remain in the committed sample file and now includes `BLOB_READ_WRITE_TOKEN` as a placeholder.
@@ -45,6 +45,10 @@
 - Ran a production build successfully after the final polish sweep.
 - Added `docs/pilot-feedback.md` and linked it from the launch handoff so the next step is real-user feedback collection.
 - Added a pilot feedback table, storage layer, API route, and in-app `/feedback` inbox page with account and launchpad shortcuts.
+- Investigated the live pricing failure and found the app could trust cached Neon session data even when middleware rejected the protected route, creating `/risk-check` redirect loops and failed billing fetches.
+- `src/lib/auth/server.ts` now requests an authoritative Neon session by disabling the cookie cache so server components and middleware stay aligned on auth state.
+- `src/components/auth-panel.tsx` now uses `authClient.signIn.email()` / `authClient.signUp.email()` directly instead of the custom `/api/auth/session` bridge, so Neon manages its own cookies/session lifecycle.
+- `src/app/auth/sign-in/page.tsx` dropped an unused import surfaced during the targeted lint pass.
 
 ## GA Milestones
 1. **Product shell polish**
@@ -62,30 +66,14 @@
    - final cleanup and handoff docs
 
 ## What?s Next
-- Decide whether to stop here or add any remaining list pagination if a future screen needs it.
-- Keep monitoring billing, auth, AI, and autosave diagnostics during real usage.
+- Push the auth-session fix to `main` and let Vercel redeploy.
+- Verify the live `/pricing` -> checkout path again after deploy.
+- If an existing browser still loops, sign out and sign back in once to clear stale session state.
 
 ## Blockers / Open Questions
-- None blocking the current release state.
-- Long-term: decide whether to keep or remove any future QA-only helpers after real usage feedback arrives.
+- None blocking the code fix itself.
+- Live verification still depends on Vercel completing the new deployment and the browser picking up the refreshed auth cookies.
 
 ## Commands Run + Results
-- Ran `pnpm exec eslint src/lib/attachment-storage.ts src/lib/attachment-storage.test.ts src/lib/risk-check-storage.ts src/lib/deal-deletion.ts src/lib/env.ts --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/attachment-storage.test.ts src/lib/deal-deletion.test.ts` successfully.
-- Ran `pnpm exec eslint src/lib/analytics-storage.ts src/lib/analytics-storage.test.ts src/lib/export-blocker-storage.ts src/app/analytics/page.tsx --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/analytics-storage.test.ts src/lib/export-blocker-storage.test.ts` successfully.
-- Ran `pnpm exec eslint src/lib/attachment-storage.ts src/lib/attachment-storage.test.ts src/lib/risk-check-storage.ts src/lib/saved-deals.ts src/app/deals/page.tsx src/app/api/deals/[id]/attachment/route.ts --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/attachment-storage.test.ts src/lib/risk-check-service.test.ts` successfully.
-- Ran `pnpm exec eslint src/lib/diagnostics.ts src/lib/diagnostics.test.ts src/app/api/deals/[id]/route.ts src/app/api/deals/[id]/attachment/route.ts src/lib/attachment-storage.ts src/lib/risk-check-storage.ts src/lib/saved-deals.ts src/app/deals/page.tsx --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/diagnostics.test.ts src/lib/attachment-storage.test.ts src/lib/deal-deletion.test.ts` successfully.
-- Ran `pnpm exec eslint src/lib/diagnostics.ts src/lib/diagnostics.test.ts src/app/api/events/route.ts src/app/api/export-blocker/route.ts src/app/api/ai/runs/[id]/route.ts src/app/api/deals/[id]/route.ts src/app/api/deals/[id]/attachment/route.ts src/app/deals/page.tsx src/lib/saved-deals.ts --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/diagnostics.test.ts src/lib/attachment-storage.test.ts src/lib/deal-deletion.test.ts src/lib/analytics-storage.test.ts` successfully.
-- Ran `pnpm exec eslint src/components/workspace-launchpad.tsx src/lib/saved-deals.ts src/app/page.tsx --max-warnings=0` successfully.
-- Ran `pnpm exec eslint src/lib/json-safe.ts src/lib/request-body.ts src/lib/analytics-storage.ts src/lib/analytics-storage.test.ts src/lib/export-blocker-storage.ts src/lib/export-blocker-storage.test.ts src/lib/risk-check-storage.ts src/lib/risk-check-service.test.ts src/lib/proposal-pack-storage.ts src/lib/proposal-pack-storage.test.ts src/lib/extraction-review-storage.ts src/lib/extraction-review-storage.test.ts src/lib/change-order-storage.ts src/lib/change-order-storage.test.ts src/lib/deal-deletion.ts src/lib/deal-deletion.test.ts src/app/api/billing/checkout/route.ts src/app/api/events/route.ts src/app/api/export-blocker/route.ts src/app/api/extraction-review/[id]/route.ts src/app/api/auth/session/route.ts --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/analytics-storage.test.ts src/lib/export-blocker-storage.test.ts src/lib/risk-check-service.test.ts src/lib/proposal-pack-storage.test.ts src/lib/extraction-review-storage.test.ts src/lib/change-order-storage.test.ts src/lib/deal-deletion.test.ts` successfully.
-- Ran `pnpm exec eslint src/lib/neon-migrations.ts src/lib/attachment-reconciliation.ts src/lib/attachment-reconciliation.test.ts src/lib/observability.ts src/lib/observability.test.ts src/lib/diagnostics.ts src/lib/diagnostics.test.ts scripts/reconcile-orphan-attachments.ts --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/attachment-reconciliation.test.ts src/lib/observability.test.ts src/lib/diagnostics.test.ts src/lib/attachment-storage.test.ts` successfully.
-- Ran `pnpm db:migrate` successfully.
+- Ran `pnpm exec eslint src/lib/auth/server.ts src/components/auth-panel.tsx src/app/auth/sign-in/page.tsx src/app/pricing/page.tsx src/app/account/page.tsx src/components/site-header.tsx --max-warnings=0` successfully.
 - Ran `pnpm build` successfully.
-- Ran `pnpm exec eslint src/lib/pilot-feedback-storage.ts src/lib/pilot-feedback-storage.test.ts src/app/api/pilot-feedback/route.ts src/components/pilot-feedback-form.tsx src/app/feedback/page.tsx src/app/account/page.tsx src/components/workspace-launchpad.tsx src/lib/deal-deletion.ts src/lib/deal-deletion.test.ts src/lib/diagnostics.ts src/lib/diagnostics.test.ts --max-warnings=0` successfully.
-- Ran `pnpm exec vitest run src/lib/pilot-feedback-storage.test.ts src/lib/deal-deletion.test.ts src/lib/diagnostics.test.ts src/lib/attachment-reconciliation.test.ts src/lib/observability.test.ts src/lib/attachment-storage.test.ts` successfully.

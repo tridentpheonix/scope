@@ -16,13 +16,14 @@
    - final QA, docs, and handoff polish
 
 ## NOW
-- none. pilot feedback collection is now wired into the app.
+- verify the live Vercel deployment after the auth/checkout fix lands on `main`.
 
 ## NEXT
-- start pilot feedback collection and capture the first real user reports.
+- if the live browser still loops after deploy, clear stale auth state by signing out and signing back in once.
 
 ## LATER
 - [M3.2] expand diagnostics capture or alert routing only if auth, billing, or maintenance edge cases show recurring patterns in smoke or pilot use.
+- [M4.5] remove the now-unused `/api/auth/session` bridge if no internal tooling still depends on it.
 
 ## COMPLETED
 - [H10] polished the signed-in workspace launchpad cards to show attachment state and a direct client-material download action.
@@ -44,6 +45,7 @@
 - [M4.3] finished the last billing / launch-checklist edge cases and verified the core launch flow.
 - [M4.1] removed the smoke-test bypass helper and replaced it with a real-auth dev smoke session flow.
 - [M4.2] added launch docs / handoff notes in `docs/launch-handoff.md` and tightened the launch checklist.
+- [M4.6] fixed the live auth-session mismatch by forcing authoritative Neon session reads and moving email sign-in/sign-up onto the official Neon auth client flow.
 - [M1.1] built a signed-in workspace launchpad on the home page with next-best-action guidance, recent-deal shortcuts, and a clearer first-run path.
 - [M1.2] tightened the first-run empty states across saved deals so new users always get a concrete next step.
 - [M2.1] added browser smoke coverage for the launchpad and the end-to-end brief -> review -> proposal path.

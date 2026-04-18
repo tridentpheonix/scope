@@ -25,25 +25,32 @@ export function AuthPanel() {
     setIsBusy(true);
 
     try {
-      const response = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mode,
+      if (mode === "sign-up") {
+        const result = await authClient.signUp.email({
           email,
           password,
           name,
-        }),
-      });
+          callbackURL: "/risk-check",
+          fetchOptions: {
+            throw: true,
+          },
+        });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { ok?: boolean; message?: string }
-        | null;
-
-      if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.message ?? "Authentication failed.");
+        if (!("token" in result) || !result.token) {
+          setMode("sign-in");
+          setStatus("Account created. Sign in to continue.");
+          setIsBusy(false);
+          return;
+        }
+      } else {
+        const result = await authClient.signIn.email({
+          email,
+          password,
+          callbackURL: "/risk-check",
+          fetchOptions: {
+            throw: true,
+          },
+        });
       }
 
       router.push("/risk-check");

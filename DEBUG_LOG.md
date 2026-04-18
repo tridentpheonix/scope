@@ -36,3 +36,11 @@
 - Added a pilot feedback playbook in `docs/pilot-feedback.md` and linked it from the launch handoff for post-launch intake.
 - Wired the playbook into a real in-app `/feedback` page with a pilot-feedback API, storage, account shortcuts, and deal-retention cleanup.
 - Verified the new feedback path with targeted ESLint/Vitest and a successful production build.
+
+- Investigated the live pricing page failure report and traced the real app-side symptoms to protected-route redirect loops plus failed billing fetches while browser extensions were also logging unrelated console noise.
+- Identified that server components could trust cached Neon session data while middleware rejected the same expired/invalid session on protected routes, which explains the /risk-check redirect loop and checkout fetch failure on /pricing.
+- Updated src/lib/auth/server.ts to disable Neon cookie-cache reads for authoritative session checks so UI auth state stays aligned with middleware/auth enforcement.
+- Updated src/components/auth-panel.tsx to use the official Neon uthClient.signIn.email() / uthClient.signUp.email() flow instead of the custom /api/auth/session bridge, so auth cookies are managed by the library rather than our manual bridge.
+- Removed an unused import from src/app/auth/sign-in/page.tsx surfaced by the targeted lint pass.
+- Re-ran targeted ESLint on the touched auth/pricing files and a full pnpm build; both passed.
+
