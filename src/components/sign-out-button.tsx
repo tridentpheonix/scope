@@ -22,21 +22,28 @@ export function SignOutButtonInner({
   async function handleSignOut() {
     setStatus(null);
     setIsBusy(true);
+    let upstreamSucceeded = false;
 
     try {
-      await authClient.signOut();
+      await authClient.signOut({
+        fetchOptions: {
+          throw: true,
+        },
+      });
+      upstreamSucceeded = true;
     } catch (error) {
       console.error("auth_sign_out_failed", error);
+    }
 
-      const fallbackResponse = await fetch("/api/auth/local-sign-out", {
-        method: "POST",
-      }).catch(() => null);
+    const fallbackResponse = await fetch("/api/auth/local-sign-out", {
+      method: "POST",
+      cache: "no-store",
+    }).catch(() => null);
 
-      if (!fallbackResponse?.ok) {
-        setStatus("Could not sign out right now. Please retry.");
-        setIsBusy(false);
-        return;
-      }
+    if (!fallbackResponse?.ok && !upstreamSucceeded) {
+      setStatus("Could not sign out right now. Please retry.");
+      setIsBusy(false);
+      return;
     }
 
     window.location.replace("/?signed_out=1");
