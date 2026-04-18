@@ -1,16 +1,29 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { dbQuery } from "./db";
 import { isNeonConfigured } from "./env";
 import { deleteAttachment, normalizeSavedAttachment } from "./attachment-storage";
 import { tryParseJson } from "./json-safe";
 import { readRiskCheckSubmissions } from "./risk-check-storage";
+import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 const defaultDataDir = path.join(process.cwd(), "data");
 
 function shouldUseNeon(baseDir?: string) {
   return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
 }
+
+type RiskCheckSubmissionDocument = {
+  _id: string;
+  workspaceId: string;
+  attachment: unknown;
+  attachmentContentBase64?: string | null;
+};
+
+type SubmissionLinkedDocument = {
+  _id: string;
+  workspaceId: string;
+  submissionId?: string;
+};
 
 type DeletionResult = {
   ok: boolean;
@@ -73,21 +86,16 @@ export async function deleteClientMaterial(
       };
     }
 
-    const matches = await dbQuery<{
-      id: string;
-      attachment: unknown;
-      attachment_content_base64: string | null;
-    }>(
-      `
-        SELECT id, attachment, attachment_content_base64
-        FROM app_risk_check_submissions
-        WHERE id = $1 AND workspace_id = $2
-        LIMIT 1
-      `,
-      [submissionId, workspaceId],
-    );
+    await ensureMongoIndexes();
+    const submissions = await getMongoCollection<RiskCheckSubmissionDocument>("risk_check_submissions");
+    const analyticsEvents = await getMongoCollection<SubmissionLinkedDocument>("analytics_events");
+    const exportFeedback = await getMongoCollection<SubmissionLinkedDocument>("export_feedback");
+    const pilotFeedback = await getMongoCollection<SubmissionLinkedDocument>("pilot_feedback");
+    const proposalPacks = await getMongoCollection<SubmissionLinkedDocument>("proposal_packs");
+    const extractionReviews = await getMongoCollection<SubmissionLinkedDocument>("extraction_reviews");
+    const changeOrders = await getMongoCollection<SubmissionLinkedDocument>("change_orders");
 
-    const submission = matches[0];
+    const submission = await submissions.findOne({ _id: submissionId, workspaceId });
     if (!submission) {
       return {
         ok: false,
@@ -95,48 +103,24 @@ export async function deleteClientMaterial(
       };
     }
 
-    await dbQuery(
-      `
-        DELETE FROM app_risk_check_submissions
-        WHERE id = $1 AND workspace_id = $2
-      `,
-      [submissionId, workspaceId],
-    );
-
-    await dbQuery(
-      `
-        DELETE FROM app_analytics_events
-        WHERE workspace_id = $1 AND submission_id = $2
-      `,
-      [workspaceId, submissionId],
-    );
-
-    await dbQuery(
-      `
-        DELETE FROM app_export_feedback
-        WHERE workspace_id = $1 AND submission_id = $2
-      `,
-      [workspaceId, submissionId],
-    );
-
-    await dbQuery(
-      `
-        DELETE FROM app_pilot_feedback
-        WHERE workspace_id = $1 AND submission_id = $2
-      `,
-      [workspaceId, submissionId],
-    );
+    await submissions.deleteOne({ _id: submissionId, workspaceId });
+    await analyticsEvents.deleteMany({ workspaceId, submissionId });
+    await exportFeedback.deleteMany({ workspaceId, submissionId });
+    await pilotFeedback.deleteMany({ workspaceId, submissionId });
+    await proposalPacks.deleteOne({ _id: submissionId, workspaceId });
+    await extractionReviews.deleteOne({ _id: submissionId, workspaceId });
+    await changeOrders.deleteOne({ _id: submissionId, workspaceId });
 
     await deleteAttachment(
       normalizeSavedAttachment(submission.attachment) ??
-        (submission.attachment_content_base64
+        (submission.attachmentContentBase64
           ? {
               originalName: "legacy-upload",
               storedName: `${submissionId}-legacy-upload`,
               mimeType: "application/octet-stream",
               size: 0,
               storageKind: "legacy-db",
-              storageRef: "stored-in-neon",
+              storageRef: "stored-in-database",
             }
           : null),
     );

@@ -1,8 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { dbQuery } from "./db";
 import { isNeonConfigured } from "./env";
 import { tryParseJson } from "./json-safe";
+import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 export type PilotFeedbackSeverity = "blocker" | "high" | "medium" | "low";
 export type PilotFeedbackBucket =
@@ -38,6 +38,22 @@ export type PilotFeedbackEntry = {
 export type SavePilotFeedbackOptions = {
   baseDir?: string;
   workspaceId?: string;
+};
+
+type PilotFeedbackDocument = {
+  _id: string;
+  workspaceId: string;
+  userId: string;
+  submissionId?: string;
+  severity: PilotFeedbackSeverity;
+  bucket: PilotFeedbackBucket;
+  whereHappened: string;
+  triedToDo: string;
+  expectedResult: string;
+  actualResult: string;
+  reproducibility: PilotFeedbackReproducibility;
+  note: string;
+  createdAt: string;
 };
 
 const defaultDataDir = path.join(process.cwd(), "data");
@@ -134,58 +150,27 @@ export async function readPilotFeedbackEntries(
       return [] satisfies PilotFeedbackEntry[];
     }
 
-    const rows = await dbQuery<{
-      id: string;
-      workspace_id: string;
-      user_id: string;
-      submission_id: string | null;
-      severity: PilotFeedbackSeverity;
-      bucket: PilotFeedbackBucket;
-      where_happened: string;
-      tried_to_do: string;
-      expected_result: string;
-      actual_result: string;
-      reproducibility: PilotFeedbackReproducibility;
-      note: string;
-      created_at: string;
-    }>(
-      `
-        SELECT
-          id,
-          workspace_id,
-          user_id,
-          submission_id,
-          severity,
-          bucket,
-          where_happened,
-          tried_to_do,
-          expected_result,
-          actual_result,
-          reproducibility,
-          note,
-          created_at
-        FROM app_pilot_feedback
-        WHERE workspace_id = $1
-        ORDER BY created_at DESC
-        LIMIT $2
-      `,
-      [workspaceId, limit],
-    );
+    await ensureMongoIndexes();
+    const feedback = await getMongoCollection<PilotFeedbackDocument>("pilot_feedback");
+    const rows = await feedback.find(
+      { workspaceId },
+      { sort: { createdAt: -1 }, limit },
+    ).toArray();
 
     return rows.map((row) => ({
-      id: row.id,
-      workspaceId: row.workspace_id,
-      userId: row.user_id,
-      submissionId: row.submission_id ?? undefined,
+      id: row._id,
+      workspaceId: row.workspaceId,
+      userId: row.userId,
+      submissionId: row.submissionId,
       severity: row.severity,
       bucket: row.bucket,
-      whereHappened: row.where_happened,
-      triedToDo: row.tried_to_do,
-      expectedResult: row.expected_result,
-      actualResult: row.actual_result,
+      whereHappened: row.whereHappened,
+      triedToDo: row.triedToDo,
+      expectedResult: row.expectedResult,
+      actualResult: row.actualResult,
       reproducibility: row.reproducibility,
       note: row.note,
-      createdAt: row.created_at,
+      createdAt: row.createdAt,
     }));
   }
 
@@ -234,7 +219,7 @@ export async function savePilotFeedbackEntry(
 
   if (shouldUseNeon(options.baseDir)) {
     if (!workspaceId) {
-      throw new Error("workspaceId is required for Neon-backed pilot feedback storage.");
+      throw new Error("workspaceId is required for Mongo-backed pilot feedback storage.");
     }
 
     const saved = {
@@ -253,41 +238,23 @@ export async function savePilotFeedbackEntry(
       createdAt: entry.createdAt ?? new Date().toISOString(),
     } satisfies PilotFeedbackEntry;
 
-    await dbQuery(
-      `
-        INSERT INTO app_pilot_feedback (
-          id,
-          workspace_id,
-          user_id,
-          submission_id,
-          severity,
-          bucket,
-          where_happened,
-          tried_to_do,
-          expected_result,
-          actual_result,
-          reproducibility,
-          note,
-          created_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      `,
-      [
-        saved.id,
-        saved.workspaceId,
-        saved.userId,
-        saved.submissionId ?? null,
-        saved.severity,
-        saved.bucket,
-        saved.whereHappened,
-        saved.triedToDo,
-        saved.expectedResult,
-        saved.actualResult,
-        saved.reproducibility,
-        saved.note,
-        saved.createdAt,
-      ],
-    );
+    await ensureMongoIndexes();
+    const feedback = await getMongoCollection<PilotFeedbackDocument>("pilot_feedback");
+    await feedback.insertOne({
+      _id: saved.id,
+      workspaceId: saved.workspaceId,
+      userId: saved.userId,
+      submissionId: saved.submissionId,
+      severity: saved.severity,
+      bucket: saved.bucket,
+      whereHappened: saved.whereHappened,
+      triedToDo: saved.triedToDo,
+      expectedResult: saved.expectedResult,
+      actualResult: saved.actualResult,
+      reproducibility: saved.reproducibility,
+      note: saved.note,
+      createdAt: saved.createdAt,
+    });
 
     return saved;
   }

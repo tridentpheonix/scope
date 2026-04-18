@@ -1,12 +1,21 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { dbQuery, parseJson, serializeJson } from "./db";
 import { isNeonConfigured } from "./env";
 import { isPlainObject, tryParseJson } from "./json-safe";
 import type { AnalyticsEvent } from "./analytics";
 import { readExportBlockerSignals, type ExportBlockerSignal } from "./export-blocker-storage";
+import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 const defaultDataDir = path.join(process.cwd(), "data");
+
+type AnalyticsEventDocument = {
+  _id: string;
+  workspaceId: string;
+  name: string;
+  submissionId?: string;
+  createdAt: string;
+  metadata?: Record<string, string | number | boolean | null>;
+};
 
 function shouldUseNeon(baseDir?: string) {
   return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
@@ -18,26 +27,18 @@ export async function readAnalyticsEvents(baseDir = defaultDataDir, workspaceId?
       return [] satisfies AnalyticsEvent[];
     }
 
-    const rows = await dbQuery<{
-      name: string;
-      submission_id: string | null;
-      created_at: string;
-      metadata: unknown;
-    }>(
-      `
-        SELECT name, submission_id, created_at, metadata
-        FROM app_analytics_events
-        WHERE workspace_id = $1
-        ORDER BY created_at DESC
-      `,
-      [workspaceId],
-    );
+    await ensureMongoIndexes();
+    const events = await getMongoCollection<AnalyticsEventDocument>("analytics_events");
+    const rows = await events.find(
+      { workspaceId },
+      { sort: { createdAt: -1 } },
+    ).toArray();
 
     return rows.map((row) => ({
       name: row.name,
-      submissionId: row.submission_id ?? undefined,
-      createdAt: row.created_at,
-      metadata: parseJson<Record<string, string | number | boolean | null>>(row.metadata) ?? undefined,
+      submissionId: row.submissionId ?? undefined,
+      createdAt: row.createdAt,
+      metadata: row.metadata ?? undefined,
     }));
   }
 
@@ -80,23 +81,19 @@ export async function saveAnalyticsEvent(
 ) {
   if (shouldUseNeon(options.baseDir)) {
     if (!options.workspaceId) {
-      throw new Error("workspaceId is required for Neon-backed analytics storage.");
+      throw new Error("workspaceId is required for Mongo-backed analytics storage.");
     }
 
-    await dbQuery(
-      `
-        INSERT INTO app_analytics_events (id, workspace_id, submission_id, name, metadata, created_at)
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6)
-      `,
-      [
-        crypto.randomUUID(),
-        options.workspaceId,
-        event.submissionId ?? null,
-        event.name,
-        serializeJson(event.metadata),
-        event.createdAt,
-      ],
-    );
+    await ensureMongoIndexes();
+    const events = await getMongoCollection<AnalyticsEventDocument>("analytics_events");
+    await events.insertOne({
+      _id: crypto.randomUUID(),
+      workspaceId: options.workspaceId,
+      submissionId: event.submissionId ?? undefined,
+      name: event.name,
+      metadata: event.metadata,
+      createdAt: event.createdAt,
+    });
 
     return event;
   }
@@ -161,96 +158,26 @@ export async function readAnalyticsDashboard(
       } satisfies AnalyticsDashboard;
     }
 
-    const [eventCounts, recentEvents, eventTotal, blockerTotal, recentSignals] =
-      await Promise.all([
-        dbQuery<{ name: string; count: number }>(
-          `
-            SELECT name, COUNT(*)::int AS count
-            FROM app_analytics_events
-            WHERE workspace_id = $1
-            GROUP BY name
-            ORDER BY count DESC, name ASC
-          `,
-          [workspaceId],
-        ),
-        dbQuery<{
-          name: string;
-          submission_id: string | null;
-          created_at: string;
-          metadata: unknown;
-        }>(
-          `
-            SELECT name, submission_id, created_at, metadata
-            FROM app_analytics_events
-            WHERE workspace_id = $1
-            ORDER BY created_at DESC
-            LIMIT $2
-          `,
-          [workspaceId, recentEventLimit],
-        ),
-        dbQuery<{ total: number }>(
-          `
-            SELECT COUNT(*)::int AS total
-            FROM app_analytics_events
-            WHERE workspace_id = $1
-          `,
-          [workspaceId],
-        ),
-        dbQuery<{ total: number }>(
-          `
-            SELECT COUNT(*)::int AS total
-            FROM app_export_feedback
-            WHERE workspace_id = $1
-          `,
-          [workspaceId],
-        ),
-        dbQuery<{
-          created_at: string;
-          note: string;
-          submission_id: string | null;
-          outcome: ExportBlockerSignal["outcome"] | null;
-          theme_preference: ExportBlockerSignal["themePreference"] | null;
-          next_step: string | null;
-        }>(
-          `
-            SELECT
-              created_at,
-              note,
-              submission_id,
-              outcome,
-              theme_preference,
-              next_step
-            FROM app_export_feedback
-            WHERE workspace_id = $1
-            ORDER BY created_at DESC
-            LIMIT $2
-          `,
-          [workspaceId, recentBlockerLimit],
-        ),
-      ]);
+    await ensureMongoIndexes();
+    const events = await getMongoCollection<AnalyticsEventDocument>("analytics_events");
+    const [allEvents, exportBlockers] = await Promise.all([
+      events.find({ workspaceId }).toArray(),
+      readExportBlockerSignals(baseDir, workspaceId, recentBlockerLimit),
+    ]);
 
     return {
-      summary: {
-        totalEvents: eventTotal[0]?.total ?? 0,
-        countsByName: Object.fromEntries(eventCounts.map((row) => [row.name, row.count])),
-        recentEvents: recentEvents.map((row) => ({
+      summary: summarizeAnalyticsEvents(
+        allEvents.map((row) => ({
           name: row.name,
-          submissionId: row.submission_id ?? undefined,
-          createdAt: row.created_at,
-          metadata:
-            parseJson<Record<string, string | number | boolean | null>>(row.metadata) ?? undefined,
+          submissionId: row.submissionId,
+          createdAt: row.createdAt,
+          metadata: row.metadata,
         })),
-      },
+        recentEventLimit,
+      ),
       exportBlockers: {
-        totalSignals: blockerTotal[0]?.total ?? 0,
-        recentSignals: recentSignals.map((row) => ({
-          createdAt: row.created_at,
-          note: row.note,
-          submissionId: row.submission_id ?? undefined,
-          outcome: row.outcome ?? undefined,
-          themePreference: row.theme_preference ?? undefined,
-          nextStep: row.next_step ?? undefined,
-        })),
+        totalSignals: (await readExportBlockerSignals(baseDir, workspaceId)).length,
+        recentSignals: exportBlockers,
       },
     } satisfies AnalyticsDashboard;
   }

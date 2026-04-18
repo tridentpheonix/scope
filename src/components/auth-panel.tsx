@@ -26,27 +26,18 @@ export function AuthPanel() {
 
     try {
       if (mode === "sign-up") {
-        const result = await authClient.signUp.email({
+        await authClient.signUp.email({
           email,
           password,
           name,
-          callbackURL: "/risk-check",
           fetchOptions: {
             throw: true,
           },
         });
-
-        if (!("token" in result) || !result.token) {
-          setMode("sign-in");
-          setStatus("Account created. Sign in to continue.");
-          setIsBusy(false);
-          return;
-        }
       } else {
-        const result = await authClient.signIn.email({
+        await authClient.signIn.email({
           email,
           password,
-          callbackURL: "/risk-check",
           fetchOptions: {
             throw: true,
           },
@@ -67,22 +58,6 @@ export function AuthPanel() {
     }
   }
 
-  async function handleGoogle() {
-    setStatus(null);
-    setIsBusy(true);
-
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/risk-check",
-      });
-    } catch (error) {
-      console.error("auth_google_failed", error);
-      setStatus("Google sign-in could not start. Please retry.");
-      setIsBusy(false);
-    }
-  }
-
   return (
     <div className="grid gap-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <div className="grid gap-3">
@@ -94,8 +69,7 @@ export function AuthPanel() {
           {panelTitle}
         </h1>
         <p className="m-0 text-sm leading-7 text-slate-600">
-          ScopeOS now stores workspace data in Neon and uses Stripe for billing. Sign in to create
-          and manage your agency workspace.
+          ScopeOS now uses first-party email/password authentication with your own MongoDB-backed workspace data.
         </p>
       </div>
 
@@ -164,7 +138,6 @@ export function AuthPanel() {
             {status}
           </div>
         ) : null}
-
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
@@ -176,14 +149,6 @@ export function AuthPanel() {
               : mode === "sign-in"
                 ? "Sign in"
                 : "Create account"}
-          </button>
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="btn btn-outline"
-            disabled={isBusy}
-          >
-            Continue with Google
           </button>
         </div>
       </form>

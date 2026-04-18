@@ -3,8 +3,8 @@
 ScopeOS helps small web design agencies turn an intake brief into a structured risk check, extraction review, proposal pack, and reusable saved deal record.
 
 It is a Next.js app with:
-- Neon Auth for sign-in
-- Neon Postgres for shared workspace data
+- first-party email/password auth and app-owned session cookies
+- MongoDB for shared workspace data
 - Vercel Blob for client-material uploads when configured
 - Stripe for billing
 - AI-assisted extraction review and proposal drafting
@@ -21,9 +21,8 @@ pnpm install
 
 Copy `.env.example` to `.env` and set the values you need:
 
-- `DATABASE_URL`
-- `NEON_AUTH_BASE_URL`
-- `NEON_AUTH_COOKIE_SECRET`
+- `MONGODB_URI`
+- `MONGODB_DB_NAME`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_SOLO_MONTHLY`
@@ -43,14 +42,14 @@ pnpm dev
 
 ## Useful commands
 
-- `pnpm lint` â€” lint the repo
-- `pnpm test` â€” run the Vitest suite
-- `pnpm build` â€” production build
-- `pnpm db:migrate` â€” apply Neon schema migrations
-- `pnpm db:bootstrap` â€” bootstrap schema state if needed
-- `pnpm attachments:reconcile` â€” find orphaned uploads/blobs and clean them up
-- `pnpm smoke:browser` â€” run the browser smoke flow
-- `pnpm eval:ai` â€” run the AI evaluation harness
+- `pnpm lint` — lint the repo
+- `pnpm test` — run the Vitest suite
+- `pnpm build` — production build
+- `pnpm db:migrate` — verify MongoDB connectivity and ensure required indexes
+- `pnpm db:bootstrap` — verify MongoDB connectivity and ensure required indexes
+- `pnpm attachments:reconcile` — find orphaned uploads/blobs and clean them up
+- `pnpm smoke:browser` — run the browser smoke flow
+- `pnpm eval:ai` — run the AI evaluation harness
 
 ## What the app does
 
@@ -66,6 +65,7 @@ pnpm dev
 - Client uploads are stored in Vercel Blob when configured; otherwise the app uses local filesystem fallback for development.
 - Saved deals and analytics are intentionally capped/aggregated so the common views stay fast.
 - Warning/error diagnostics can be shipped to an external webhook for hosted observability.
+- Authentication is first-party: password hashes and sessions are owned by the app rather than an external auth provider.
 
 ## Testing
 
@@ -77,11 +77,10 @@ The main automated checks are:
 
 ## Deployment
 
-ScopeOS is designed for Vercel deployment with Neon, Stripe, and optional Blob storage.
+ScopeOS is designed for Vercel deployment with MongoDB, Stripe, and optional Blob storage.
 
 Before release, verify:
-- migrations apply cleanly
+- MongoDB connectivity and indexes are healthy
 - env vars are set in the target environment
 - attachment downloads work with your chosen storage backend
 - the observability webhook is reachable if you enable it
-

@@ -4,9 +4,8 @@ function readEnv(name: string) {
 }
 
 export const appEnv = {
-  databaseUrl: readEnv("DATABASE_URL"),
-  neonAuthBaseUrl: readEnv("NEON_AUTH_BASE_URL"),
-  neonAuthCookieSecret: readEnv("NEON_AUTH_COOKIE_SECRET"),
+  mongoUri: readEnv("MONGODB_URI"),
+  mongoDbName: readEnv("MONGODB_DB_NAME"),
   nvidiaApiBaseUrl: readEnv("NVIDIA_API_BASE_URL"),
   nvidiaApiKey: readEnv("NVIDIA_API_KEY"),
   nvidiaModel: readEnv("NVIDIA_MODEL"),
@@ -23,21 +22,21 @@ export const appEnv = {
   observabilityWebhookSecret: readEnv("OBSERVABILITY_WEBHOOK_SECRET"),
 };
 
+export function isMongoConfigured() {
+  return Boolean(appEnv.mongoUri && appEnv.mongoDbName);
+}
+
+export function isAuthConfigured() {
+  return isMongoConfigured();
+}
+
+// Temporary compatibility aliases while the storage layer finishes moving off the old naming.
 export function isNeonConfigured() {
-  return Boolean(appEnv.databaseUrl);
+  return isMongoConfigured();
 }
 
 export function isNeonAuthConfigured() {
-  const url = appEnv.neonAuthBaseUrl;
-  const secret = appEnv.neonAuthCookieSecret;
-
-  return Boolean(
-    url &&
-      secret &&
-      !url.includes("example.com") &&
-      !url.includes("scopeos.app") && // Skip my own placeholder
-      url.startsWith("https://"),
-  );
+  return isAuthConfigured();
 }
 
 export function isAiConfigured() {

@@ -1,6 +1,5 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { dbQuery, parseJson, serializeJson } from "./db";
 import { isNeonConfigured } from "./env";
 import { isPlainObject, tryParseJson } from "./json-safe";
 import {
@@ -9,6 +8,7 @@ import {
 } from "./risk-check-analysis";
 import type { RiskCheckInput } from "./risk-check-schema";
 import { normalizeSavedAttachment, saveAttachment, type SavedAttachment } from "./attachment-storage";
+import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 export type SavedSubmission = {
   id: string;
@@ -26,6 +26,16 @@ export type PersistRiskCheckSubmissionOptions = {
   workspaceId?: string;
 };
 
+type RiskCheckSubmissionDocument = {
+  _id: string;
+  workspaceId: string;
+  createdAt: string;
+  payload: RiskCheckInput;
+  attachment: SavedAttachment | null;
+  attachmentContentBase64?: string | null;
+  analysis: RiskCheckAnalysis;
+};
+
 const defaultDataDir = path.join(process.cwd(), "data");
 
 function shouldUseNeon(baseDir?: string) {
@@ -40,7 +50,7 @@ export async function persistRiskCheckSubmission(
 ) {
   if (shouldUseNeon(options.baseDir)) {
     if (!options.workspaceId) {
-      throw new Error("workspaceId is required for Neon-backed risk check storage.");
+      throw new Error("workspaceId is required for Mongo-backed risk check storage.");
     }
 
     const id = options.id ?? crypto.randomUUID();
@@ -54,22 +64,17 @@ export async function persistRiskCheckSubmission(
       analysis,
     };
 
-    await dbQuery(
-      `
-        INSERT INTO app_risk_check_submissions (
-          id, workspace_id, created_at, payload, attachment, attachment_content_base64, analysis
-        )
-        VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, NULL, $6::jsonb)
-      `,
-      [
-        submission.id,
-        options.workspaceId,
-        submission.createdAt,
-        serializeJson(submission.payload),
-        serializeJson(submission.attachment),
-        serializeJson(submission.analysis),
-      ],
-    );
+    await ensureMongoIndexes();
+    const submissions = await getMongoCollection<RiskCheckSubmissionDocument>("risk_check_submissions");
+    await submissions.insertOne({
+      _id: submission.id,
+      workspaceId: options.workspaceId,
+      createdAt: submission.createdAt,
+      payload: submission.payload,
+      attachment: submission.attachment,
+      attachmentContentBase64: null,
+      analysis: submission.analysis,
+    });
 
     return submission;
   }
@@ -103,44 +108,34 @@ export async function readRiskCheckSubmissions(
       return [] satisfies SavedSubmission[];
     }
 
-    const rows = await dbQuery<{
-      id: string;
-      created_at: string;
-      payload: unknown;
-      attachment: unknown;
-      attachment_content_base64: string | null;
-      analysis: unknown;
-    }>(
-      `
-        SELECT id, created_at, payload, attachment, attachment_content_base64, analysis
-        FROM app_risk_check_submissions
-        WHERE workspace_id = $1
-        ORDER BY created_at DESC
-        ${typeof limit === "number" ? "LIMIT $2" : ""}
-      `,
-      typeof limit === "number" ? [workspaceId, limit] : [workspaceId],
-    );
+    await ensureMongoIndexes();
+    const submissions = await getMongoCollection<RiskCheckSubmissionDocument>("risk_check_submissions");
+    const rows = await submissions.find(
+      { workspaceId },
+      {
+        sort: { createdAt: -1 },
+        ...(typeof limit === "number" ? { limit } : {}),
+      },
+    ).toArray();
 
     return rows.map((row) => ({
-      id: row.id,
-      createdAt: row.created_at,
-      payload: parseJson<RiskCheckInput>(row.payload)!,
+      id: row._id,
+      createdAt: row.createdAt,
+      payload: row.payload,
       attachment:
         normalizeSavedAttachment(row.attachment) ??
-        (row.attachment_content_base64
+        (row.attachmentContentBase64
           ? {
               originalName: "legacy-upload",
-              storedName: `${row.id}-legacy-upload`,
+              storedName: `${row._id}-legacy-upload`,
               mimeType: "application/octet-stream",
               size: 0,
               storageKind: "legacy-db",
-              storageRef: "stored-in-neon",
+              storageRef: "stored-in-database",
             }
           : null),
-      attachmentContentBase64: row.attachment_content_base64,
-      analysis:
-        parseJson<RiskCheckAnalysis>(row.analysis) ??
-        analyzeRiskCheckSubmission(parseJson<RiskCheckInput>(row.payload)!),
+      attachmentContentBase64: row.attachmentContentBase64 ?? null,
+      analysis: row.analysis ?? analyzeRiskCheckSubmission(row.payload),
     }));
   }
 
@@ -201,47 +196,32 @@ export async function readRiskCheckSubmissionById(
       return null;
     }
 
-    const rows = await dbQuery<{
-      id: string;
-      created_at: string;
-      payload: unknown;
-      attachment: unknown;
-      attachment_content_base64: string | null;
-      analysis: unknown;
-    }>(
-      `
-        SELECT id, created_at, payload, attachment, attachment_content_base64, analysis
-        FROM app_risk_check_submissions
-        WHERE id = $1 AND workspace_id = $2
-        LIMIT 1
-      `,
-      [id, workspaceId],
-    );
-
-    const row = rows[0];
+    await ensureMongoIndexes();
+    const submissions = await getMongoCollection<RiskCheckSubmissionDocument>("risk_check_submissions");
+    const row = await submissions.findOne({ _id: id, workspaceId });
     if (!row) {
       return null;
     }
 
-    const payload = parseJson<RiskCheckInput>(row.payload)!;
+    const payload = row.payload;
     return {
-      id: row.id,
-      createdAt: row.created_at,
+      id: row._id,
+      createdAt: row.createdAt,
       payload,
       attachment:
         normalizeSavedAttachment(row.attachment) ??
-        (row.attachment_content_base64
+        (row.attachmentContentBase64
           ? {
               originalName: "legacy-upload",
-              storedName: `${row.id}-legacy-upload`,
+              storedName: `${row._id}-legacy-upload`,
               mimeType: "application/octet-stream",
               size: 0,
               storageKind: "legacy-db",
-              storageRef: "stored-in-neon",
+              storageRef: "stored-in-database",
             }
           : null),
-      attachmentContentBase64: row.attachment_content_base64,
-      analysis: parseJson<RiskCheckAnalysis>(row.analysis) ?? analyzeRiskCheckSubmission(payload),
+      attachmentContentBase64: row.attachmentContentBase64 ?? null,
+      analysis: row.analysis ?? analyzeRiskCheckSubmission(payload),
     } satisfies SavedSubmission;
   }
 

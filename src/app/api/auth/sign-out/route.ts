@@ -4,8 +4,6 @@ import { clearAuthCookie, revokeSessionFromRequest } from "@/lib/auth/first-part
 export async function POST() {
   await revokeSessionFromRequest();
   const response = NextResponse.json({ ok: true });
-
   clearAuthCookie(response);
-
   return response;
 }

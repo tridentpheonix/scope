@@ -1,19 +1,14 @@
-import { neon } from "@neondatabase/serverless";
+import { getMongoDb } from "../lib/mongo";
 
-async function testConnection() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    console.error("No DATABASE_URL found");
-    return;
-  }
-
+async function main() {
   try {
-    const sql = neon(url);
-    const result = await sql`SELECT 1 as connected`;
-    console.log("Database connection successful:", result);
+    const db = await getMongoDb();
+    await db.command({ ping: 1 });
+    console.log("MongoDB connection successful");
   } catch (error) {
     console.error("Database connection failed:", error);
+    process.exit(1);
   }
 }
 
-testConnection();
+void main();

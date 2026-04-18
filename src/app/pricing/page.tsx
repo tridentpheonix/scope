@@ -16,7 +16,7 @@ const plans = [
     cadence: "for one live deal",
     description: "Best for founders validating whether ScopeOS catches real scope gaps.",
     features: [
-      "Authenticated workspace in Neon",
+      "Authenticated workspace in your own MongoDB stack",
       "1 free Scope Risk Check",
       "Extraction review + proposal draft editing",
       "Copy full pack + markdown export",

@@ -1,32 +1,11 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { createNeonAuth } from "@neondatabase/auth/next/server";
-import { appEnv, isNeonAuthConfigured, isNeonConfigured } from "../env";
+import { readAuthenticatedUserFromCookies } from "./first-party";
 import { ensureWorkspaceForUser } from "../workspace-billing";
 
-const authInstance = isNeonAuthConfigured()
-  ? createNeonAuth({
-      baseUrl: appEnv.neonAuthBaseUrl!,
-      cookies: {
-        secret: appEnv.neonAuthCookieSecret!,
-        sessionDataTtl: 300,
-      },
-    })
-  : null;
-
-export const auth = authInstance;
+export const auth = null;
 
 export async function getCurrentSession() {
-  if (!auth) {
-    return await getDevSessionFromCookie();
-  }
-
-  const { data: session } = await auth.getSession({
-    query: {
-      disableCookieCache: "true",
-    },
-  });
-  return session ?? (await getDevSessionFromCookie());
+  return await readAuthenticatedUserFromCookies();
 }
 
 export async function getCurrentUser() {
@@ -64,13 +43,6 @@ async function getWorkspaceContextForUser(user: {
   email: string;
   name?: string | null;
 }) {
-  if (!isNeonConfigured()) {
-    return {
-      user,
-      workspace: null,
-    };
-  }
-
   const workspace = await ensureWorkspaceForUser({
     id: user.id,
     email: user.email,
@@ -81,34 +53,4 @@ async function getWorkspaceContextForUser(user: {
     user,
     workspace,
   };
-}
-
-async function getDevSessionFromCookie() {
-  if (process.env.NODE_ENV === "production") {
-    return null;
-  }
-
-  const cookieStore = await cookies();
-  const raw = cookieStore.get("scopeos-dev-auth-session")?.value;
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw)) as {
-      token?: string;
-      user?: { id: string; email: string; name?: string | null };
-    };
-
-    if (!parsed.user?.id || !parsed.user.email) {
-      return null;
-    }
-
-    return {
-      user: parsed.user,
-      token: parsed.token ?? null,
-    };
-  } catch {
-    return null;
-  }
 }

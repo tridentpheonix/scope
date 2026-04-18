@@ -1,5 +1,4 @@
-import { dbQuery } from "./db";
-import { isNeonConfigured } from "./env";
+import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 export type WorkspaceRecord = {
   id: string;
@@ -14,53 +13,58 @@ export type WorkspaceRecord = {
   updatedAt: string;
 };
 
-type WorkspaceRow = {
-  id: string;
-  owner_user_id: string;
+type WorkspaceDocument = {
+  _id: string;
+  ownerUserId: string;
   name: string;
-  plan_key: "free" | "solo" | "team";
-  subscription_status: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
-  stripe_price_id: string | null;
-  created_at: string;
-  updated_at: string;
+  planKey: "free" | "solo" | "team";
+  subscriptionStatus: string;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  stripePriceId: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
-function mapWorkspace(row: WorkspaceRow): WorkspaceRecord {
+type WorkspaceMembershipDocument = {
+  _id: string;
+  workspaceId: string;
+  userId: string;
+  role: "owner" | "member";
+  createdAt: string;
+};
+
+function mapWorkspace(document: WorkspaceDocument): WorkspaceRecord {
   return {
-    id: row.id,
-    ownerUserId: row.owner_user_id,
-    name: row.name,
-    planKey: row.plan_key,
-    subscriptionStatus: row.subscription_status,
-    stripeCustomerId: row.stripe_customer_id,
-    stripeSubscriptionId: row.stripe_subscription_id,
-    stripePriceId: row.stripe_price_id,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    id: document._id,
+    ownerUserId: document.ownerUserId,
+    name: document.name,
+    planKey: document.planKey,
+    subscriptionStatus: document.subscriptionStatus,
+    stripeCustomerId: document.stripeCustomerId,
+    stripeSubscriptionId: document.stripeSubscriptionId,
+    stripePriceId: document.stripePriceId,
+    createdAt: document.createdAt,
+    updatedAt: document.updatedAt,
   };
 }
 
 export async function getWorkspaceForUser(userId: string) {
-  if (!isNeonConfigured()) {
+  await ensureMongoIndexes();
+
+  const memberships = await getMongoCollection<WorkspaceMembershipDocument>("workspace_memberships");
+  const workspaces = await getMongoCollection<WorkspaceDocument>("workspaces");
+  const membership = await memberships.findOne(
+    { userId },
+    { sort: { createdAt: 1 } },
+  );
+
+  if (!membership) {
     return null;
   }
 
-  const rows = await dbQuery<WorkspaceRow>(
-    `
-      SELECT w.*
-      FROM app_workspaces w
-      INNER JOIN app_workspace_memberships m
-        ON m.workspace_id = w.id
-      WHERE m.user_id = $1
-      ORDER BY w.created_at ASC
-      LIMIT 1
-    `,
-    [userId],
-  );
-
-  return rows[0] ? mapWorkspace(rows[0]) : null;
+  const workspace = await workspaces.findOne({ _id: membership.workspaceId });
+  return workspace ? mapWorkspace(workspace) : null;
 }
 
 export async function ensureWorkspaceForUser(user: {
@@ -68,52 +72,58 @@ export async function ensureWorkspaceForUser(user: {
   email: string;
   name?: string | null;
 }) {
+  await ensureMongoIndexes();
+
   const existing = await getWorkspaceForUser(user.id);
   if (existing) {
     return existing;
   }
 
+  const workspaces = await getMongoCollection<WorkspaceDocument>("workspaces");
+  const memberships = await getMongoCollection<WorkspaceMembershipDocument>("workspace_memberships");
   const workspaceId = crypto.randomUUID();
+  const now = new Date().toISOString();
   const workspaceName =
     user.name?.trim() || `${user.email.split("@")[0]}'s ScopeOS workspace`;
 
-  await dbQuery(
-    `
-      INSERT INTO app_workspaces (
-        id, owner_user_id, name, plan_key, subscription_status, created_at, updated_at
-      )
-      VALUES ($1, $2, $3, 'free', 'inactive', $4, $4)
-    `,
-    [workspaceId, user.id, workspaceName, new Date().toISOString()],
-  );
+  await workspaces.insertOne({
+    _id: workspaceId,
+    ownerUserId: user.id,
+    name: workspaceName,
+    planKey: "free",
+    subscriptionStatus: "inactive",
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    stripePriceId: null,
+    createdAt: now,
+    updatedAt: now,
+  });
 
-  await dbQuery(
-    `
-      INSERT INTO app_workspace_memberships (workspace_id, user_id, role)
-      VALUES ($1, $2, 'owner')
-    `,
-    [workspaceId, user.id],
-  );
+  await memberships.insertOne({
+    _id: `${workspaceId}:${user.id}`,
+    workspaceId,
+    userId: user.id,
+    role: "owner",
+    createdAt: now,
+  });
 
-  return await getWorkspaceForUser(user.id);
+  return await getWorkspaceById(workspaceId);
 }
 
 export async function getWorkspaceById(workspaceId: string) {
-  const rows = await dbQuery<WorkspaceRow>(
-    `SELECT * FROM app_workspaces WHERE id = $1 LIMIT 1`,
-    [workspaceId],
-  );
+  await ensureMongoIndexes();
 
-  return rows[0] ? mapWorkspace(rows[0]) : null;
+  const workspaces = await getMongoCollection<WorkspaceDocument>("workspaces");
+  const workspace = await workspaces.findOne({ _id: workspaceId });
+  return workspace ? mapWorkspace(workspace) : null;
 }
 
 export async function getWorkspaceByStripeCustomerId(stripeCustomerId: string) {
-  const rows = await dbQuery<WorkspaceRow>(
-    `SELECT * FROM app_workspaces WHERE stripe_customer_id = $1 LIMIT 1`,
-    [stripeCustomerId],
-  );
+  await ensureMongoIndexes();
 
-  return rows[0] ? mapWorkspace(rows[0]) : null;
+  const workspaces = await getMongoCollection<WorkspaceDocument>("workspaces");
+  const workspace = await workspaces.findOne({ stripeCustomerId });
+  return workspace ? mapWorkspace(workspace) : null;
 }
 
 export async function updateWorkspaceBilling(
@@ -126,7 +136,10 @@ export async function updateWorkspaceBilling(
     stripePriceId: string | null;
   }>,
 ) {
-  const current = await getWorkspaceById(workspaceId);
+  await ensureMongoIndexes();
+
+  const workspaces = await getMongoCollection<WorkspaceDocument>("workspaces");
+  const current = await workspaces.findOne({ _id: workspaceId });
   if (!current) {
     return null;
   }
@@ -148,27 +161,14 @@ export async function updateWorkspaceBilling(
         : updates.stripePriceId,
   };
 
-  await dbQuery(
-    `
-      UPDATE app_workspaces
-      SET
-        plan_key = $2,
-        subscription_status = $3,
-        stripe_customer_id = $4,
-        stripe_subscription_id = $5,
-        stripe_price_id = $6,
-        updated_at = $7
-      WHERE id = $1
-    `,
-    [
-      workspaceId,
-      next.planKey,
-      next.subscriptionStatus,
-      next.stripeCustomerId,
-      next.stripeSubscriptionId,
-      next.stripePriceId,
-      new Date().toISOString(),
-    ],
+  await workspaces.updateOne(
+    { _id: workspaceId },
+    {
+      $set: {
+        ...next,
+        updatedAt: new Date().toISOString(),
+      },
+    },
   );
 
   return await getWorkspaceById(workspaceId);

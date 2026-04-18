@@ -1,11 +1,13 @@
-import { runNeonMigrations } from "../src/lib/db";
+import { ensureMongoIndexes, getMongoDb } from "../src/lib/mongo";
 
 async function main() {
-  await runNeonMigrations();
-  console.log("Neon schema bootstrap complete.");
+  const db = await getMongoDb();
+  await db.command({ ping: 1 });
+  await ensureMongoIndexes();
+  console.log("MongoDB bootstrap complete.");
 }
 
 main().catch((error) => {
-  console.error("Neon schema bootstrap failed.", error);
+  console.error("MongoDB bootstrap failed.", error);
   process.exitCode = 1;
 });

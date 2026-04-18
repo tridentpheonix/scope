@@ -82,7 +82,7 @@ export function normalizeSavedAttachment(value: unknown): SavedAttachment | null
         : typeof attachment.relativePath === "string"
           ? attachment.relativePath
           : storageKind === "legacy-db"
-            ? "stored-in-neon"
+            ? "stored-in-database"
             : "";
 
   if (!storageRef) {

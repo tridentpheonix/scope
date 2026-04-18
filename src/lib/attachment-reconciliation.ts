@@ -1,7 +1,6 @@
 import { del, list } from "@vercel/blob";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { dbQuery } from "./db";
 import { appEnv, isBlobStorageConfigured, isNeonConfigured } from "./env";
 import { normalizeSavedAttachment, type SavedAttachment } from "./attachment-storage";
 import { recordDiagnostic } from "./diagnostics";
@@ -66,43 +65,11 @@ function collectAttachmentRefs(attachments: Array<SavedAttachment | null>) {
 }
 
 async function readAllReferencedAttachments(baseDir: string, workspaceId?: string) {
-  if (shouldUseNeon(baseDir)) {
-    const rows = await dbQuery<{
-      attachment: unknown;
-      attachment_content_base64: string | null;
-    }>(
-      workspaceId
-        ? `
-          SELECT attachment, attachment_content_base64
-          FROM app_risk_check_submissions
-          WHERE workspace_id = $1
-        `
-        : `
-          SELECT attachment, attachment_content_base64
-          FROM app_risk_check_submissions
-        `,
-      workspaceId ? [workspaceId] : [],
-    );
-
-    return collectAttachmentRefs(
-      rows.map((row) =>
-        normalizeSavedAttachment(row.attachment) ??
-        (row.attachment_content_base64
-          ? {
-              originalName: "legacy-upload",
-              storedName: "legacy-upload",
-              mimeType: "application/octet-stream",
-              size: 0,
-              storageKind: "legacy-db",
-              storageRef: "stored-in-neon",
-            }
-          : null),
-      ),
-    );
-  }
-
-  const submissions = await readRiskCheckSubmissions(baseDir, workspaceId);
-  return collectAttachmentRefs(submissions.map((submission) => submission.attachment));
+  const submissions = await readRiskCheckSubmissions(
+    baseDir,
+    shouldUseNeon(baseDir) ? workspaceId : workspaceId,
+  );
+  return collectAttachmentRefs(submissions.map((submission) => normalizeSavedAttachment(submission.attachment)));
 }
 
 async function reconcileBlobAttachments(

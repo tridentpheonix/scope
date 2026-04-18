@@ -1,17 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { isNeonAuthConfigured } from "@/lib/env";
 
-const neonMiddleware = isNeonAuthConfigured()
-  ? auth?.middleware({ loginUrl: "/auth/sign-in" })
-  : null;
-
-export default function middleware(request: NextRequest) {
-  if (!neonMiddleware) {
-    return NextResponse.next();
-  }
-
-  return neonMiddleware(request);
+export default function middleware(_request: NextRequest) {
+  void _request;
+  return NextResponse.next();
 }
 
 export const config = {

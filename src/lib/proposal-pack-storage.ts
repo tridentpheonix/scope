@@ -1,9 +1,9 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { dbQuery, parseJson, serializeJson } from "./db";
 import { isNeonConfigured } from "./env";
 import { isPlainObject, tryParseJson } from "./json-safe";
 import { assertWorkspaceOwnership } from "./workspace-scope";
+import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 export type SavedProposalPackRecord = {
   submissionId: string;
@@ -15,6 +15,13 @@ export type SaveProposalPackOptions = {
   baseDir?: string;
   updatedAt?: string;
   workspaceId?: string;
+};
+
+type ProposalPackDocument = {
+  _id: string;
+  workspaceId: string;
+  updatedAt: string;
+  clientBlocks: Record<string, string>;
 };
 
 const defaultDataDir = path.join(process.cwd(), "data");
@@ -43,29 +50,17 @@ export async function readProposalPackRecord(
       return null;
     }
 
-    const rows = await dbQuery<{
-      submission_id: string;
-      updated_at: string;
-      client_blocks: unknown;
-    }>(
-      `
-        SELECT submission_id, updated_at, client_blocks
-        FROM app_proposal_packs
-        WHERE submission_id = $1 AND workspace_id = $2
-        LIMIT 1
-      `,
-      [submissionId, workspaceId],
-    );
-
-    const row = rows[0];
+    await ensureMongoIndexes();
+    const proposalPacks = await getMongoCollection<ProposalPackDocument>("proposal_packs");
+    const row = await proposalPacks.findOne({ _id: submissionId, workspaceId });
     if (!row) {
       return null;
     }
 
     return {
-      submissionId: row.submission_id,
-      updatedAt: row.updated_at,
-      clientBlocks: parseJson<Record<string, string>>(row.client_blocks) ?? {},
+      submissionId: row._id,
+      updatedAt: row.updatedAt,
+      clientBlocks: row.clientBlocks ?? {},
     } satisfies SavedProposalPackRecord;
   }
 
@@ -109,25 +104,20 @@ export async function readProposalPackRecords(
       return [] satisfies SavedProposalPackRecord[];
     }
 
-    const rows = await dbQuery<{
-      submission_id: string;
-      updated_at: string;
-      client_blocks: unknown;
-    }>(
-      `
-        SELECT submission_id, updated_at, client_blocks
-        FROM app_proposal_packs
-        WHERE workspace_id = $1
-        ORDER BY updated_at DESC
-        ${typeof limit === "number" ? "LIMIT $2" : ""}
-      `,
-      typeof limit === "number" ? [workspaceId, limit] : [workspaceId],
-    );
+    await ensureMongoIndexes();
+    const proposalPacks = await getMongoCollection<ProposalPackDocument>("proposal_packs");
+    const rows = await proposalPacks.find(
+      { workspaceId },
+      {
+        sort: { updatedAt: -1 },
+        ...(typeof limit === "number" ? { limit } : {}),
+      },
+    ).toArray();
 
     return rows.map((row) => ({
-      submissionId: row.submission_id,
-      updatedAt: row.updated_at,
-      clientBlocks: parseJson<Record<string, string>>(row.client_blocks) ?? {},
+      submissionId: row._id,
+      updatedAt: row.updatedAt,
+      clientBlocks: row.clientBlocks ?? {},
     }));
   }
 
@@ -180,34 +170,27 @@ export async function saveProposalPackRecord(
   if (shouldUseNeon(options.baseDir)) {
     const workspaceId = options.workspaceId;
     if (!workspaceId) {
-      throw new Error("workspaceId is required for Neon-backed proposal pack storage.");
+      throw new Error("workspaceId is required for Mongo-backed proposal pack storage.");
     }
 
     const updatedAt = options.updatedAt ?? new Date().toISOString();
-    const existingRows = await dbQuery<{ workspace_id: string }>(
-      `
-        SELECT workspace_id
-        FROM app_proposal_packs
-        WHERE submission_id = $1
-        LIMIT 1
-      `,
-      [submissionId],
-    );
 
-    assertWorkspaceOwnership("proposal pack", workspaceId, existingRows[0]?.workspace_id);
+    await ensureMongoIndexes();
+    const proposalPacks = await getMongoCollection<ProposalPackDocument>("proposal_packs");
+    const existing = await proposalPacks.findOne({ _id: submissionId });
 
-    await dbQuery(
-      `
-        INSERT INTO app_proposal_packs (submission_id, workspace_id, updated_at, client_blocks)
-        VALUES ($1, $2, $3, $4::jsonb)
-        ON CONFLICT (submission_id)
-        DO UPDATE SET
-          workspace_id = EXCLUDED.workspace_id,
-          updated_at = EXCLUDED.updated_at,
-          client_blocks = EXCLUDED.client_blocks
-        WHERE app_proposal_packs.workspace_id = EXCLUDED.workspace_id
-      `,
-      [submissionId, workspaceId, updatedAt, serializeJson(clientBlocks)],
+    assertWorkspaceOwnership("proposal pack", workspaceId, existing?.workspaceId);
+
+    await proposalPacks.updateOne(
+      { _id: submissionId },
+      {
+        $set: {
+          workspaceId,
+          updatedAt,
+          clientBlocks,
+        },
+      },
+      { upsert: true },
     );
 
     return {

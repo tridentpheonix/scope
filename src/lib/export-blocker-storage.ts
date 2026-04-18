@@ -1,8 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { dbQuery } from "./db";
 import { isNeonConfigured } from "./env";
 import { isPlainObject, tryParseJson } from "./json-safe";
+import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 export type ExportBlockerSignal = {
   createdAt: string;
@@ -10,6 +10,17 @@ export type ExportBlockerSignal = {
   submissionId?: string;
   outcome?: "reduced-friction" | "needs-theme-options" | "needs-google-docs" | "other";
   themePreference?: "light" | "dark" | "both" | "unspecified";
+  nextStep?: string;
+};
+
+type ExportFeedbackDocument = {
+  _id: string;
+  workspaceId: string;
+  createdAt: string;
+  note: string;
+  submissionId?: string;
+  outcome?: ExportBlockerSignal["outcome"];
+  themePreference?: ExportBlockerSignal["themePreference"];
   nextStep?: string;
 };
 
@@ -29,22 +40,24 @@ export async function readExportBlockerSignals(
       return [] satisfies ExportBlockerSignal[];
     }
 
-    return await dbQuery<ExportBlockerSignal & { submission_id?: string }>(
-      `
-        SELECT
-          created_at AS "createdAt",
-          note,
-          submission_id AS "submissionId",
-          outcome,
-          theme_preference AS "themePreference",
-          next_step AS "nextStep"
-        FROM app_export_feedback
-        WHERE workspace_id = $1
-        ORDER BY created_at DESC
-        ${typeof limit === "number" ? "LIMIT $2" : ""}
-      `,
-      typeof limit === "number" ? [workspaceId, limit] : [workspaceId],
-    );
+    await ensureMongoIndexes();
+    const feedback = await getMongoCollection<ExportFeedbackDocument>("export_feedback");
+    const rows = await feedback.find(
+      { workspaceId },
+      {
+        sort: { createdAt: -1 },
+        ...(typeof limit === "number" ? { limit } : {}),
+      },
+    ).toArray();
+
+    return rows.map((row) => ({
+      createdAt: row.createdAt,
+      note: row.note,
+      submissionId: row.submissionId,
+      outcome: row.outcome,
+      themePreference: row.themePreference,
+      nextStep: row.nextStep,
+    }));
   }
 
   const filePath = path.join(baseDir, "export-blockers.ndjson");
@@ -95,27 +108,21 @@ export async function saveExportBlockerSignal(
 
   if (shouldUseNeon(baseDir)) {
     if (!workspaceId) {
-      throw new Error("workspaceId is required for Neon-backed export feedback storage.");
+      throw new Error("workspaceId is required for Mongo-backed export feedback storage.");
     }
 
-    await dbQuery(
-      `
-        INSERT INTO app_export_feedback (
-          id, workspace_id, submission_id, note, outcome, theme_preference, next_step, created_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      `,
-      [
-        crypto.randomUUID(),
-        workspaceId,
-        submissionId ?? null,
-        payload.note,
-        payload.outcome ?? null,
-        payload.themePreference ?? null,
-        payload.nextStep ?? null,
-        payload.createdAt,
-      ],
-    );
+    await ensureMongoIndexes();
+    const feedback = await getMongoCollection<ExportFeedbackDocument>("export_feedback");
+    await feedback.insertOne({
+      _id: crypto.randomUUID(),
+      workspaceId,
+      createdAt: payload.createdAt,
+      note: payload.note,
+      submissionId: payload.submissionId,
+      outcome: payload.outcome,
+      themePreference: payload.themePreference,
+      nextStep: payload.nextStep,
+    });
 
     return payload;
   }

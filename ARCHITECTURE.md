@@ -3,7 +3,7 @@
 > ScopeOS current-state map
 
 ## Overview
-ScopeOS is a Next.js App Router application in TypeScript with Tailwind-based UI, Neon-backed auth/database storage, Stripe billing, and structured AI generation for extraction review and proposal-pack rewriting.
+ScopeOS is a Next.js App Router application in TypeScript with Tailwind-based UI, first-party auth/session handling, MongoDB-backed workspace storage, Stripe billing, and structured AI generation for extraction review and proposal-pack rewriting.
 
 The app is intentionally narrow:
 - intake a messy website brief
@@ -29,26 +29,28 @@ flowchart LR
 ## Main Components
 
 ### App routes
-- `src/app/page.tsx` â€” marketing landing page and launch entrypoint
-- `src/app/risk-check/page.tsx` â€” intake page for new briefs
-- `src/app/extraction-review/[id]/page.tsx` â€” internal scope review step
-- `src/app/proposal-pack/[id]/page.tsx` â€” editable proposal pack workspace
-- `src/app/deals/page.tsx` â€” saved deal history and reopen flow
-- `src/app/analytics/page.tsx` â€” usage / feedback dashboard
-- `src/app/account/page.tsx` â€” plan and billing control surface
+- `src/app/page.tsx` — marketing landing page and launch entrypoint
+- `src/app/risk-check/page.tsx` — intake page for new briefs
+- `src/app/extraction-review/[id]/page.tsx` — internal scope review step
+- `src/app/proposal-pack/[id]/page.tsx` — editable proposal pack workspace
+- `src/app/deals/page.tsx` — saved deal history and reopen flow
+- `src/app/analytics/page.tsx` — usage / feedback dashboard
+- `src/app/account/page.tsx` — plan and billing control surface
 
 ### Core libraries
-- `src/lib/risk-check-*` â€” intake schema, storage, analysis, and presenters
-- `src/lib/extraction-review-*` â€” internal review logic, storage, and AI helper
-- `src/lib/proposal-pack-*` â€” proposal generation, storage, and AI helper
-- `src/lib/ai-provider.ts` â€” provider resolution, response parsing, and friendly labels
-- `src/lib/analytics-storage.ts` â€” event storage and summary logic
-- `src/lib/workspace-billing.ts` â€” workspace records, plan state, and billing sync
+- `src/lib/risk-check-*` — intake schema, storage, analysis, and presenters
+- `src/lib/extraction-review-*` — internal review logic, storage, and AI helper
+- `src/lib/proposal-pack-*` — proposal generation, storage, and AI helper
+- `src/lib/ai-provider.ts` — provider resolution, response parsing, and friendly labels
+- `src/lib/analytics-storage.ts` — event storage and summary logic
+- `src/lib/workspace-billing.ts` — workspace records, plan state, and billing sync
+- `src/lib/auth/*` — first-party credential, session, and current-user helpers
+- `src/lib/mongo.ts` — MongoDB client lifecycle and index bootstrap
 
 ### External services
 | Service | Purpose |
 | --- | --- |
-| Neon Postgres + Neon Auth | Authentication and workspace-scoped persistence |
+| MongoDB + first-party auth/session layer | Authentication, sessions, and workspace-scoped persistence |
 | Stripe | Checkout, billing portal, and subscription sync |
 | NVIDIA OpenAI-compatible endpoint | AI generation for review and rewrite workflows |
 
@@ -65,10 +67,11 @@ flowchart LR
 - Server components own workspace-aware fetching.
 - Client components own editing, autosave, and interaction-heavy UI.
 - Storage is workspace-scoped and designed to survive refreshes.
+- Authentication is app-owned: password hashes live in MongoDB and sessions are cookie-backed from the app itself.
 - AI outputs are structured and explainable rather than free-form chat.
 - Feature access is gated by plan where appropriate.
 
-## Technical Debt / GA Cleanup
-- Dev-only smoke-test auth bypass should stay fail-closed in production and be removed once browser fixtures are enough.
-- The current launch experience is still landing-page-first; it needs a signed-in workspace command center.
+## Technical Debt / Next Cleanup
+- Storage helper naming still uses some legacy `shouldUseNeon` compatibility wrappers and should be renamed to Mongo-neutral terminology in a cleanup pass.
+- A few repo docs and historical logs still mention Neon and should be treated as stale historical context, not current architecture.
 - Browser automation coverage is still thinner than it should be for GA confidence.
