@@ -18,6 +18,9 @@ export const appEnv = {
   stripePriceSoloMonthly: readEnv("STRIPE_PRICE_SOLO_MONTHLY"),
   stripePriceTeamMonthly: readEnv("STRIPE_PRICE_TEAM_MONTHLY"),
   appBaseUrl: readEnv("APP_BASE_URL"),
+  blobReadWriteToken: readEnv("BLOB_READ_WRITE_TOKEN"),
+  observabilityWebhookUrl: readEnv("OBSERVABILITY_WEBHOOK_URL"),
+  observabilityWebhookSecret: readEnv("OBSERVABILITY_WEBHOOK_SECRET"),
 };
 
 export function isNeonConfigured() {
@@ -42,6 +45,14 @@ export function isAiConfigured() {
     (appEnv.nvidiaApiKey || appEnv.aiApiKey) &&
       (appEnv.nvidiaModel || appEnv.aiModel),
   );
+}
+
+export function isBlobStorageConfigured() {
+  return Boolean(appEnv.blobReadWriteToken);
+}
+
+export function isObservabilityConfigured() {
+  return Boolean(appEnv.observabilityWebhookUrl);
 }
 
 export function isStripeConfigured() {

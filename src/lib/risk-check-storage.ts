@@ -2,25 +2,20 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { dbQuery, parseJson, serializeJson } from "./db";
 import { isNeonConfigured } from "./env";
+import { isPlainObject, tryParseJson } from "./json-safe";
 import {
   analyzeRiskCheckSubmission,
   type RiskCheckAnalysis,
 } from "./risk-check-analysis";
 import type { RiskCheckInput } from "./risk-check-schema";
-
-export type SavedAttachment = {
-  originalName: string;
-  storedName: string;
-  mimeType: string;
-  size: number;
-  relativePath: string;
-};
+import { normalizeSavedAttachment, saveAttachment, type SavedAttachment } from "./attachment-storage";
 
 export type SavedSubmission = {
   id: string;
   createdAt: string;
   payload: RiskCheckInput;
   attachment: SavedAttachment | null;
+  attachmentContentBase64?: string | null;
   analysis: RiskCheckAnalysis;
 };
 
@@ -37,41 +32,6 @@ function shouldUseNeon(baseDir?: string) {
   return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
 }
 
-function sanitizeFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-");
-}
-
-async function ensureDataDir(baseDir: string) {
-  const uploadDir = path.join(baseDir, "uploads");
-  await fs.mkdir(uploadDir, { recursive: true });
-}
-
-async function saveAttachment(
-  id: string,
-  file: File | null | undefined,
-  baseDir: string,
-) {
-  if (!file || file.size === 0) {
-    return null;
-  }
-
-  const safeName = sanitizeFileName(file.name);
-  const storedName = `${id}-${safeName}`;
-  const relativePath = path.join("uploads", storedName);
-  const absolutePath = path.join(baseDir, relativePath);
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  await fs.writeFile(absolutePath, buffer);
-
-  return {
-    originalName: file.name,
-    storedName,
-    mimeType: file.type,
-    size: file.size,
-    relativePath,
-  } satisfies SavedAttachment;
-}
-
 export async function persistRiskCheckSubmission(
   payload: RiskCheckInput,
   file: File | null | undefined,
@@ -84,21 +44,7 @@ export async function persistRiskCheckSubmission(
     }
 
     const id = options.id ?? crypto.randomUUID();
-    const attachment =
-      file && file.size > 0
-        ? ({
-            originalName: file.name,
-            storedName: `${id}-${sanitizeFileName(file.name)}`,
-            mimeType: file.type,
-            size: file.size,
-            relativePath: "stored-in-neon",
-          } satisfies SavedAttachment)
-        : null;
-
-    const attachmentContentBase64 =
-      file && file.size > 0
-        ? Buffer.from(await file.arrayBuffer()).toString("base64")
-        : null;
+    const attachment = await saveAttachment(id, file, options.baseDir ?? defaultDataDir);
 
     const submission: SavedSubmission = {
       id,
@@ -113,7 +59,7 @@ export async function persistRiskCheckSubmission(
         INSERT INTO app_risk_check_submissions (
           id, workspace_id, created_at, payload, attachment, attachment_content_base64, analysis
         )
-        VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7::jsonb)
+        VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, NULL, $6::jsonb)
       `,
       [
         submission.id,
@@ -121,7 +67,6 @@ export async function persistRiskCheckSubmission(
         submission.createdAt,
         serializeJson(submission.payload),
         serializeJson(submission.attachment),
-        attachmentContentBase64,
         serializeJson(submission.analysis),
       ],
     );
@@ -131,7 +76,6 @@ export async function persistRiskCheckSubmission(
 
   const baseDir = options.baseDir ?? defaultDataDir;
   const submissionsFile = path.join(baseDir, "risk-check-submissions.ndjson");
-  await ensureDataDir(baseDir);
 
   const id = options.id ?? crypto.randomUUID();
   const attachment = await saveAttachment(id, file, baseDir);
@@ -152,6 +96,7 @@ export async function persistRiskCheckSubmission(
 export async function readRiskCheckSubmissions(
   baseDir = defaultDataDir,
   workspaceId?: string,
+  limit?: number,
 ) {
   if (shouldUseNeon(baseDir)) {
     if (!workspaceId) {
@@ -163,22 +108,36 @@ export async function readRiskCheckSubmissions(
       created_at: string;
       payload: unknown;
       attachment: unknown;
+      attachment_content_base64: string | null;
       analysis: unknown;
     }>(
       `
-        SELECT id, created_at, payload, attachment, analysis
+        SELECT id, created_at, payload, attachment, attachment_content_base64, analysis
         FROM app_risk_check_submissions
         WHERE workspace_id = $1
         ORDER BY created_at DESC
+        ${typeof limit === "number" ? "LIMIT $2" : ""}
       `,
-      [workspaceId],
+      typeof limit === "number" ? [workspaceId, limit] : [workspaceId],
     );
 
     return rows.map((row) => ({
       id: row.id,
       createdAt: row.created_at,
       payload: parseJson<RiskCheckInput>(row.payload)!,
-      attachment: parseJson<SavedAttachment | null>(row.attachment),
+      attachment:
+        normalizeSavedAttachment(row.attachment) ??
+        (row.attachment_content_base64
+          ? {
+              originalName: "legacy-upload",
+              storedName: `${row.id}-legacy-upload`,
+              mimeType: "application/octet-stream",
+              size: 0,
+              storageKind: "legacy-db",
+              storageRef: "stored-in-neon",
+            }
+          : null),
+      attachmentContentBase64: row.attachment_content_base64,
       analysis:
         parseJson<RiskCheckAnalysis>(row.analysis) ??
         analyzeRiskCheckSubmission(parseJson<RiskCheckInput>(row.payload)!),
@@ -189,19 +148,39 @@ export async function readRiskCheckSubmissions(
 
   try {
     const content = await fs.readFile(submissionsFile, "utf8");
-
-    return content
+    const submissions = content
       .split(/\r?\n/)
       .filter(Boolean)
-      .map((line) => {
-        const submission = JSON.parse(line) as SavedSubmission;
+      .flatMap((line) => {
+        const submission = tryParseJson<SavedSubmission>(line);
+        if (
+          !isPlainObject(submission) ||
+          typeof submission.id !== "string" ||
+          typeof submission.createdAt !== "string" ||
+          !isPlainObject(submission.payload)
+        ) {
+          return [];
+        }
 
-        return {
-          ...submission,
-          analysis:
-            submission.analysis ?? analyzeRiskCheckSubmission(submission.payload),
-        } satisfies SavedSubmission;
+        try {
+          const typedSubmission = submission as SavedSubmission;
+
+          return {
+            ...typedSubmission,
+            analysis:
+              typedSubmission.analysis ??
+              analyzeRiskCheckSubmission(typedSubmission.payload),
+          } satisfies SavedSubmission;
+        } catch {
+          return [];
+        }
       });
+
+    const sortedSubmissions = submissions.sort(
+      (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+    );
+
+    return typeof limit === "number" ? sortedSubmissions.slice(0, limit) : sortedSubmissions;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {
@@ -227,10 +206,11 @@ export async function readRiskCheckSubmissionById(
       created_at: string;
       payload: unknown;
       attachment: unknown;
+      attachment_content_base64: string | null;
       analysis: unknown;
     }>(
       `
-        SELECT id, created_at, payload, attachment, analysis
+        SELECT id, created_at, payload, attachment, attachment_content_base64, analysis
         FROM app_risk_check_submissions
         WHERE id = $1 AND workspace_id = $2
         LIMIT 1
@@ -248,7 +228,19 @@ export async function readRiskCheckSubmissionById(
       id: row.id,
       createdAt: row.created_at,
       payload,
-      attachment: parseJson<SavedAttachment | null>(row.attachment),
+      attachment:
+        normalizeSavedAttachment(row.attachment) ??
+        (row.attachment_content_base64
+          ? {
+              originalName: "legacy-upload",
+              storedName: `${row.id}-legacy-upload`,
+              mimeType: "application/octet-stream",
+              size: 0,
+              storageKind: "legacy-db",
+              storageRef: "stored-in-neon",
+            }
+          : null),
+      attachmentContentBase64: row.attachment_content_base64,
       analysis: parseJson<RiskCheckAnalysis>(row.analysis) ?? analyzeRiskCheckSubmission(payload),
     } satisfies SavedSubmission;
   }

@@ -37,9 +37,25 @@ describe("change order storage", () => {
     );
 
     const record = await readChangeOrderRecord("deal-1", baseDir);
+    await fs.writeFile(
+      path.join(baseDir, "change-orders", "broken.json"),
+      JSON.stringify({
+        submissionId: "broken",
+        updatedAt: "2026-04-12T01:00:00.000Z",
+        draft: { driftItems: "not-an-array" },
+      }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(baseDir, "change-orders", "malformed.json"),
+      "{not-json",
+      "utf8",
+    );
+    const broken = await readChangeOrderRecord("broken", baseDir);
 
     expect(record?.submissionId).toBe("deal-1");
     expect(record?.draft.driftItems).toHaveLength(2);
     expect(record?.draft.impactNotes).toContain("additional build time");
+    expect(broken).toBeNull();
   });
 });

@@ -88,6 +88,38 @@ describe("deal deletion", () => {
       `${JSON.stringify({ name: "proposal_pack_opened", submissionId: submission.id, createdAt: new Date().toISOString() })}\n`,
       "utf8",
     );
+    await fs.appendFile(path.join(baseDir, "risk-check-submissions.ndjson"), "not-json\n", "utf8");
+    await fs.appendFile(path.join(baseDir, "events.ndjson"), "not-json\n", "utf8");
+
+    await fs.appendFile(
+      path.join(baseDir, "export-blockers.ndjson"),
+      `${JSON.stringify({ note: "Need PDF export", submissionId: submission.id, createdAt: new Date().toISOString() })}\n`,
+      "utf8",
+    );
+    await fs.appendFile(
+      path.join(baseDir, "pilot-feedback.ndjson"),
+      `${JSON.stringify({
+        id: "feedback-1",
+        workspaceId: "workspace-1",
+        userId: "user-1",
+        submissionId: submission.id,
+        severity: "high",
+        bucket: "deals",
+        whereHappened: "/deals",
+        triedToDo: "Download client materials",
+        expectedResult: "The file should download",
+        actualResult: "The route returned a 404",
+        reproducibility: "always",
+        note: "Pilot user reported the missing download flow.",
+        createdAt: new Date().toISOString(),
+      })}\n`,
+      "utf8",
+    );
+    await fs.appendFile(
+      path.join(baseDir, "export-blockers.ndjson"),
+      `${JSON.stringify({ note: "missing createdAt" })}\n`,
+      "utf8",
+    );
 
     const result = await deleteClientMaterial(submission.id, baseDir);
 
@@ -96,6 +128,14 @@ describe("deal deletion", () => {
     expect(remainingSubmissions).toHaveLength(0);
     await expect(
       fs.stat(path.join(baseDir, "proposal-packs", `${submission.id}.json`)),
+    ).rejects.toThrow();
+    const exportBlockersContent = await fs.readFile(
+      path.join(baseDir, "export-blockers.ndjson"),
+      "utf8",
+    );
+    expect(exportBlockersContent).not.toContain(submission.id);
+    await expect(
+      fs.readFile(path.join(baseDir, "pilot-feedback.ndjson"), "utf8"),
     ).rejects.toThrow();
   });
 });

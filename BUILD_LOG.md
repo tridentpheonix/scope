@@ -97,3 +97,10 @@
 - Added structured diagnostic logging helpers and wired them into intake, AI, billing, and Stripe webhook failure paths so the most important errors are visible in JSON form and persisted locally.
 - Added a lightweight AI evaluation harness (`src/lib/ai-evaluation.ts`) plus a `tsx` CLI runner that loads `.env` / `.env.local`, evaluates fallback and live NVIDIA-backed extraction/proposal cases, and prints a structured report.
 - Verified the AI eval harness with Vitest, then ran the CLI in fallback-only mode and against the live NVIDIA provider; both passed on the three representative concierge cases.
+
+## 2026-04-17
+- Removed the stale `PlanGate` server/client prop path from the analytics and saved-deals pages so those routes no longer depend on a serialized function prop.
+- Marked `/risk-check` as explicitly dynamic so the shared header can read auth state without Next.js emitting the static-render cookie warning during build.
+- Hardened the proposal-pack and change-order autosave routes so empty or aborted request bodies return a normal validation response instead of a server parse error.
+- Removed stale QA artifacts from the workspace and verified the browser smoke still passes end to end on `http://localhost:3001`.
+- Re-ran targeted ESLint and `pnpm build`; both passed cleanly with no blocking launch warnings.

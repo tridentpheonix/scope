@@ -16,15 +16,32 @@
    - final QA, docs, and handoff polish
 
 ## NOW
-- [M4.3] finish the last billing / launch-checklist edge cases before GA handoff.
+- none. pilot feedback collection is now wired into the app.
 
 ## NEXT
-- [M4.4] remove any remaining launch-only log noise or QA artifacts if they still affect developer flow.
+- start pilot feedback collection and capture the first real user reports.
 
 ## LATER
-- [M3.2] expand diagnostics capture if auth or billing edge cases show recurring patterns in smoke or pilot use.
+- [M3.2] expand diagnostics capture or alert routing only if auth, billing, or maintenance edge cases show recurring patterns in smoke or pilot use.
 
 ## COMPLETED
+- [H10] polished the signed-in workspace launchpad cards to show attachment state and a direct client-material download action.
+- [H9] added saved-deals pagination controls and extended structured diagnostics to analytics and AI run routes.
+- [H8] added structured diagnostics for deal delete/download failures and extended the logger contract with a deal-specific area.
+- [H7] added an authenticated client-material download route plus a download button on saved deals so attachments can be retrieved after upload.
+- [H6] replaced the analytics dashboard full-history scan with aggregate summary reads and capped recent export-feedback events.
+- [H5] capped recent-history reads for saved deals and proposal memory so the common workspace views stop scanning the full history tables by default.
+- [H4] tightened client-material deletion so Neon and local retention cleanup also removes related analytics/export feedback records, with blob deletes now best-effort.
+- [H3] moved client uploads out of Postgres into Vercel Blob when configured, with filesystem fallback and delete cleanup.
+- [H2] replaced hidden request-time schema bootstrapping with explicit Neon migrations and added `pnpm db:migrate`.
+- [H1] scrubbed `.env.example`, moved Neon schema setup out of request-time code, and added tenant ownership guards for workspace-scoped saves.
+- [H11] hardened the remaining malformed-file and malformed-request-body edge cases across the local storage readers and main API routes.
+- [H12] added DB-level tenant guardrails, orphan attachment reconciliation, and a webhook-backed observability sink for maintenance warnings/errors.
+- [H13] finished the final release-polish sweep with a README, cleaner ignore rules, and a passing production build.
+- [H14] documented the pilot feedback playbook and linked it from the launch handoff.
+- [H15] wired a real in-app pilot feedback inbox at `/feedback` with storage, API, and retention cleanup.
+- [M4.4] removed remaining launch-only log noise / QA artifacts and cleaned up the stale plan-gate path.
+- [M4.3] finished the last billing / launch-checklist edge cases and verified the core launch flow.
 - [M4.1] removed the smoke-test bypass helper and replaced it with a real-auth dev smoke session flow.
 - [M4.2] added launch docs / handoff notes in `docs/launch-handoff.md` and tightened the launch checklist.
 - [M1.1] built a signed-in workspace launchpad on the home page with next-best-action guidance, recent-deal shortcuts, and a clearer first-run path.
@@ -32,8 +49,6 @@
 - [M2.1] added browser smoke coverage for the launchpad and the end-to-end brief -> review -> proposal path.
 - [M2.2] added structured logging / diagnostics for AI, auth, billing, and webhook failures.
 - [M3.1] added a lightweight AI evaluation harness with fallback checks, live NVIDIA smoke coverage, and a CLI runner for prompt/model regressions.
-
-## COMPLETED
 - [S1] chose small web design agencies selling SMB brochure/marketing website redesigns as the first ScopeOS niche.
 - [S2] defined the exact v1 output format, first-value moment, and scoped proposal-pack workflow in `PRD.md`.
 - [S3] built the initial marketing landing page plus Scope Risk Checker intake flow.

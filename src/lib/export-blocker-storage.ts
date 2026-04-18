@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { dbQuery } from "./db";
 import { isNeonConfigured } from "./env";
+import { isPlainObject, tryParseJson } from "./json-safe";
 
 export type ExportBlockerSignal = {
   createdAt: string;
@@ -18,7 +19,11 @@ function shouldUseNeon(baseDir?: string) {
   return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
 }
 
-export async function readExportBlockerSignals(baseDir = defaultDataDir, workspaceId?: string) {
+export async function readExportBlockerSignals(
+  baseDir = defaultDataDir,
+  workspaceId?: string,
+  limit?: number,
+) {
   if (shouldUseNeon(baseDir)) {
     if (!workspaceId) {
       return [] satisfies ExportBlockerSignal[];
@@ -36,8 +41,9 @@ export async function readExportBlockerSignals(baseDir = defaultDataDir, workspa
         FROM app_export_feedback
         WHERE workspace_id = $1
         ORDER BY created_at DESC
+        ${typeof limit === "number" ? "LIMIT $2" : ""}
       `,
-      [workspaceId],
+      typeof limit === "number" ? [workspaceId, limit] : [workspaceId],
     );
   }
 
@@ -45,10 +51,24 @@ export async function readExportBlockerSignals(baseDir = defaultDataDir, workspa
 
   try {
     const content = await fs.readFile(filePath, "utf8");
-    return content
+    const signals = content
       .split(/\r?\n/)
       .filter(Boolean)
-      .map((line) => JSON.parse(line) as ExportBlockerSignal);
+      .flatMap((line) => {
+        const parsed = tryParseJson<ExportBlockerSignal>(line);
+        if (
+          !isPlainObject(parsed) ||
+          typeof parsed.createdAt !== "string" ||
+          typeof parsed.note !== "string"
+        ) {
+          return [];
+        }
+
+        return [parsed as ExportBlockerSignal];
+      })
+      .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
+
+    return typeof limit === "number" ? signals.slice(0, limit) : signals;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {

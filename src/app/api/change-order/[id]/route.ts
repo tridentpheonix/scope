@@ -15,6 +15,14 @@ type ChangeOrderBody = {
   draft?: ChangeOrderDraft;
 };
 
+async function readChangeOrderBody(request: Request) {
+  try {
+    return (await request.json()) as ChangeOrderBody;
+  } catch {
+    return null;
+  }
+}
+
 function isValidStringList(value: unknown) {
   return (
     Array.isArray(value) &&
@@ -71,7 +79,17 @@ export async function PUT(request: Request, { params }: RouteProps) {
     }
 
     const { id } = await params;
-    const body = (await request.json()) as ChangeOrderBody;
+    const body = await readChangeOrderBody(request);
+
+    if (!body) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Change-order payload is invalid.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (!isValidDraft(body.draft)) {
       return NextResponse.json(

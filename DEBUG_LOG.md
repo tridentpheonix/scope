@@ -14,3 +14,25 @@
 - Re-ran the browser smoke after the auth-session fix and confirmed the full route path passed end to end.
 - Wrote launch handoff notes into `docs/launch-handoff.md` so the next step is billing edge-case cleanup plus final GA handoff polish.
 - Confirmed the current state was pushed to GitHub and deployed to Vercel, then verified the live deployment responds with HTTP 200.
+
+## 2026-04-17
+- Investigated the broken `/deals` and `/analytics` behavior and found the stale `PlanGate` function-prop path between the server pages and the client component.
+- Removed the `PlanGate` dependency from those pages, deleted the dead component, and marked `/risk-check` as dynamic to clear the Next.js cookie warning in build output.
+- Hardened proposal-pack and change-order autosave routes so aborted or empty JSON bodies no longer surface as server parse errors during smoke verification.
+- Removed stale QA log artifacts from the workspace.
+- Re-ran targeted lint, `pnpm build`, and the repo browser smoke; the smoke now passes end to end again on `http://localhost:3001/`.
+
+## 2026-04-18
+- Finished a final hardening sweep for malformed local data and malformed request bodies.
+- Added shared JSON helpers so local storage readers skip corrupted NDJSON / JSON files instead of crashing workspace views.
+- Hardened the billing checkout, analytics event, export blocker, extraction-review, and dev auth session routes so bad payloads fail closed with 400-level responses instead of bubbling unexpected 500s.
+- Added regression coverage for malformed files and malformed payloads across analytics, proposal packs, extraction reviews, change orders, deal deletion, and risk-check reads.
+- Re-ran targeted ESLint and Vitest on the touched storage and API layers; both passed.
+- Added DB-level tenant guardrails via a follow-up Neon migration, then applied the migration runner successfully.
+- Added an orphan-attachment reconciliation helper/CLI plus a local filesystem cleanup test; the dry-run/apply flow now logs maintenance diagnostics.
+- Added a webhook-backed observability sink for warn/error diagnostics and covered it with targeted tests.
+- Re-ran focused ESLint/Vitest on the migration, observability, diagnostics, and reconciliation files; all passed.
+- Added a README, tightened ignore rules for local release artifacts, cleaned the safe root log files, and re-ran the production build successfully.
+- Added a pilot feedback playbook in `docs/pilot-feedback.md` and linked it from the launch handoff for post-launch intake.
+- Wired the playbook into a real in-app `/feedback` page with a pilot-feedback API, storage, account shortcuts, and deal-retention cleanup.
+- Verified the new feedback path with targeted ESLint/Vitest and a successful production build.

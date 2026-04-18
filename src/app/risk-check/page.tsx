@@ -1,6 +1,8 @@
 import { RiskCheckForm } from "@/components/risk-check-form";
 import { SiteHeader } from "@/components/site-header";
 
+export const dynamic = "force-dynamic";
+
 const checklist = [
   "Content ownership and migration responsibility",
   "CMS / platform assumptions",

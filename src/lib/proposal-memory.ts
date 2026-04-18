@@ -19,9 +19,10 @@ export async function readProposalMemory(
   baseDir?: string,
   workspaceId?: string,
 ) {
+  const sourceLimit = Math.max(limit * 20, 25);
   const [submissions, proposalPacks] = await Promise.all([
-    readRiskCheckSubmissions(baseDir, workspaceId),
-    readProposalPackRecords(baseDir, workspaceId),
+    readRiskCheckSubmissions(baseDir, workspaceId, sourceLimit),
+    readProposalPackRecords(baseDir, workspaceId, sourceLimit),
   ]);
 
   const submissionMap = new Map(

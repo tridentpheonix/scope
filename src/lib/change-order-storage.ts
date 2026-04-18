@@ -2,6 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { dbQuery, parseJson, serializeJson } from "./db";
 import { isNeonConfigured } from "./env";
+import { isPlainObject, tryParseJson } from "./json-safe";
+import { assertWorkspaceOwnership } from "./workspace-scope";
 import {
   normalizeChangeOrderDraft,
   type ChangeOrderDraft,
@@ -77,12 +79,26 @@ export async function readChangeOrderRecord(
 
   try {
     const content = await fs.readFile(filePath, "utf8");
-    const record = JSON.parse(content) as SavedChangeOrderRecord;
+    const record = tryParseJson<SavedChangeOrderRecord>(content);
 
-    return {
-      ...record,
-      draft: normalizeChangeOrderDraft(record.draft),
-    } satisfies SavedChangeOrderRecord;
+    if (
+      !isPlainObject(record) ||
+      typeof record.submissionId !== "string" ||
+      typeof record.updatedAt !== "string" ||
+      !isPlainObject(record.draft)
+    ) {
+      return null;
+    }
+
+    try {
+      return {
+        submissionId: record.submissionId,
+        updatedAt: record.updatedAt,
+        draft: normalizeChangeOrderDraft(record.draft as ChangeOrderDraft),
+      } satisfies SavedChangeOrderRecord;
+    } catch {
+      return null;
+    }
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {
@@ -99,12 +115,24 @@ export async function saveChangeOrderRecord(
   options: SaveChangeOrderOptions = {},
 ) {
   if (shouldUseNeon(options.baseDir)) {
-    if (!options.workspaceId) {
+    const workspaceId = options.workspaceId;
+    if (!workspaceId) {
       throw new Error("workspaceId is required for Neon-backed change-order storage.");
     }
 
     const updatedAt = options.updatedAt ?? new Date().toISOString();
     const normalizedDraft = normalizeChangeOrderDraft(draft);
+    const existingRows = await dbQuery<{ workspace_id: string }>(
+      `
+        SELECT workspace_id
+        FROM app_change_orders
+        WHERE submission_id = $1
+        LIMIT 1
+      `,
+      [submissionId],
+    );
+
+    assertWorkspaceOwnership("change-order draft", workspaceId, existingRows[0]?.workspace_id);
 
     await dbQuery(
       `
@@ -115,8 +143,9 @@ export async function saveChangeOrderRecord(
           workspace_id = EXCLUDED.workspace_id,
           updated_at = EXCLUDED.updated_at,
           draft = EXCLUDED.draft
+        WHERE app_change_orders.workspace_id = EXCLUDED.workspace_id
       `,
-      [submissionId, options.workspaceId, updatedAt, serializeJson(normalizedDraft)],
+      [submissionId, workspaceId, updatedAt, serializeJson(normalizedDraft)],
     );
 
     return {

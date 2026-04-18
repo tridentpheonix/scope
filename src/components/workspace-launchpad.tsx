@@ -114,6 +114,9 @@ export function WorkspaceLaunchpad({
               <Link href="/analytics" className="btn btn-large btn-secondary">
                 Open analytics
               </Link>
+              <Link href="/feedback" className="btn btn-large btn-secondary">
+                Pilot feedback
+              </Link>
             </div>
 
             {deals.length === 0 ? (
@@ -177,12 +180,26 @@ export function WorkspaceLaunchpad({
                             <div className="text-base font-semibold text-white">
                               {deal.agencyName}
                             </div>
-                            <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                              {deal.currentStageLabel}
-                            </div>
                           </div>
                           <span className="text-xs text-slate-400">
                             {formatDateTimeLabel(deal.lastTouchedAt)}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                            {deal.currentStageLabel}
+                          </span>
+                          <span
+                            className={`rounded-full border px-3 py-1.5 ${
+                              deal.hasAttachment
+                                ? "border-amber-300/30 bg-amber-300/10 text-amber-100"
+                                : "border-white/10 bg-white/5 text-slate-400"
+                            }`}
+                          >
+                            {deal.hasAttachment
+                              ? deal.attachmentLabel ?? "Client materials saved"
+                              : "No attachment"}
                           </span>
                         </div>
 
@@ -200,6 +217,14 @@ export function WorkspaceLaunchpad({
                           >
                             Extraction review
                           </Link>
+                          {deal.hasAttachment ? (
+                            <a
+                              href={`/api/deals/${deal.submissionId}/attachment`}
+                              className="btn btn-small btn-secondary"
+                            >
+                              Download materials
+                            </a>
+                          ) : null}
                         </div>
                       </article>
                     );

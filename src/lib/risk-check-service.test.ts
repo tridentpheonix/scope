@@ -68,12 +68,18 @@ describe("submitRiskCheck", () => {
       );
     }
 
+    await fs.appendFile(
+      path.join(baseDir, "risk-check-submissions.ndjson"),
+      "not-json\n",
+      "utf8",
+    );
+
     const savedSubmissions = await readRiskCheckSubmissions(baseDir);
 
     expect(savedSubmissions).toHaveLength(conciergeTestCases.length);
     expect(submissionIds.size).toBe(conciergeTestCases.length);
     expect(savedSubmissions.map((submission) => submission.payload.projectType)).toEqual(
-      conciergeTestCases.map((testCase) => testCase.form.projectType),
+      conciergeTestCases.map((testCase) => testCase.form.projectType).reverse(),
     );
   });
 });

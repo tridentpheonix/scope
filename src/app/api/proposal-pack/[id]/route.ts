@@ -8,6 +8,14 @@ type ProposalPackBody = {
   clientBlocks?: Record<string, string>;
 };
 
+async function readProposalPackBody(request: Request) {
+  try {
+    return (await request.json()) as ProposalPackBody;
+  } catch {
+    return null;
+  }
+}
+
 function isValidClientBlocks(value: unknown): value is Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
@@ -53,7 +61,17 @@ export async function PUT(request: Request, { params }: RouteProps) {
     }
 
     const { id } = await params;
-    const body = (await request.json()) as ProposalPackBody;
+    const body = await readProposalPackBody(request);
+
+    if (!body) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Proposal pack save payload is invalid.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (!isValidClientBlocks(body.clientBlocks)) {
       return NextResponse.json(

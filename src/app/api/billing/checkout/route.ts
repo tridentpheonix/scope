@@ -3,6 +3,7 @@ import { getCurrentWorkspaceContextOrNull } from "@/lib/auth/server";
 import { recordDiagnostic } from "@/lib/diagnostics";
 import { canUseStripeBilling, getAbsoluteUrl, getPriceIdForPlan, getStripeServer, type PaidPlanKey } from "@/lib/stripe";
 import { updateWorkspaceBilling } from "@/lib/workspace-billing";
+import { readJsonBody } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 
@@ -35,7 +36,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = (await request.json()) as CheckoutBody;
+    const body = await readJsonBody<CheckoutBody>(request);
+    if (!body) {
+      void recordDiagnostic("warn", "billing", "billing_checkout_invalid_payload", {
+        route: "/api/billing/checkout",
+        status: 400,
+        workspaceId: authContext.workspace.id,
+        message: "Billing checkout payload is invalid.",
+      });
+      return NextResponse.json(
+        { ok: false, message: "Billing checkout payload is invalid." },
+        { status: 400 },
+      );
+    }
+
     if (body.planKey !== "solo" && body.planKey !== "team") {
       void recordDiagnostic("warn", "billing", "billing_checkout_invalid_plan", {
         route: "/api/billing/checkout",

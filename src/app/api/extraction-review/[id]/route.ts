@@ -8,6 +8,7 @@ import {
   readExtractionReviewRecord,
   saveExtractionReviewRecord,
 } from "@/lib/extraction-review-storage";
+import { readJsonBody } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 
@@ -75,7 +76,17 @@ export async function PUT(request: Request, { params }: RouteProps) {
     }
 
     const { id } = await params;
-    const body = (await request.json()) as ExtractionReviewBody;
+    const body = await readJsonBody<ExtractionReviewBody>(request);
+
+    if (!body) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Extraction review payload is invalid.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (!isValidExtractionReview(body.review)) {
       return NextResponse.json(

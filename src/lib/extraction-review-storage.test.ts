@@ -46,6 +46,20 @@ describe("extraction review storage", () => {
     );
 
     const record = await readExtractionReviewRecord("review-1", baseDir);
+    await fs.writeFile(
+      path.join(baseDir, "extraction-reviews", "broken.json"),
+      JSON.stringify({
+        submissionId: "broken",
+        updatedAt: "2026-04-11T01:00:00.000Z",
+        review: { summary: "bad" },
+      }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(baseDir, "extraction-reviews", "malformed.json"),
+      "{not-json",
+      "utf8",
+    );
     const records = await readExtractionReviewRecords(baseDir);
 
     expect(record?.review.summary).toBe("Tighten around migration and content readiness.");

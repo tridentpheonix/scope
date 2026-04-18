@@ -2,6 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { dbQuery, parseJson, serializeJson } from "./db";
 import { isNeonConfigured } from "./env";
+import { isPlainObject, tryParseJson } from "./json-safe";
+import { assertWorkspaceOwnership } from "./workspace-scope";
 import {
   normalizeExtractionReviewDraft,
   type ExtractionReviewDraft,
@@ -77,12 +79,26 @@ export async function readExtractionReviewRecord(
 
   try {
     const content = await fs.readFile(filePath, "utf8");
-    const record = JSON.parse(content) as SavedExtractionReviewRecord;
+    const record = tryParseJson<SavedExtractionReviewRecord>(content);
 
-    return {
-      ...record,
-      review: normalizeExtractionReviewDraft(record.review),
-    } satisfies SavedExtractionReviewRecord;
+    if (
+      !isPlainObject(record) ||
+      typeof record.submissionId !== "string" ||
+      typeof record.updatedAt !== "string" ||
+      !isPlainObject(record.review)
+    ) {
+      return null;
+    }
+
+    try {
+      return {
+        submissionId: record.submissionId,
+        updatedAt: record.updatedAt,
+        review: normalizeExtractionReviewDraft(record.review as ExtractionReviewDraft),
+      } satisfies SavedExtractionReviewRecord;
+    } catch {
+      return null;
+    }
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {
@@ -96,6 +112,7 @@ export async function readExtractionReviewRecord(
 export async function readExtractionReviewRecords(
   baseDir = defaultDataDir,
   workspaceId?: string,
+  limit?: number,
 ) {
   if (shouldUseNeon(baseDir)) {
     if (!workspaceId) {
@@ -112,8 +129,9 @@ export async function readExtractionReviewRecords(
         FROM app_extraction_reviews
         WHERE workspace_id = $1
         ORDER BY updated_at DESC
+        ${typeof limit === "number" ? "LIMIT $2" : ""}
       `,
-      [workspaceId],
+      typeof limit === "number" ? [workspaceId, limit] : [workspaceId],
     );
 
     return rows.map((row) => ({
@@ -139,16 +157,34 @@ export async function readExtractionReviewRecords(
           path.join(extractionReviewDir, fileName),
           "utf8",
         );
-        const record = JSON.parse(content) as SavedExtractionReviewRecord;
+        const record = tryParseJson<SavedExtractionReviewRecord>(content);
 
-        return {
-          ...record,
-          review: normalizeExtractionReviewDraft(record.review),
-        } satisfies SavedExtractionReviewRecord;
+        if (
+          !isPlainObject(record) ||
+          typeof record.submissionId !== "string" ||
+          typeof record.updatedAt !== "string" ||
+          !isPlainObject(record.review)
+        ) {
+          return null;
+        }
+
+        try {
+          return {
+            submissionId: record.submissionId,
+            updatedAt: record.updatedAt,
+            review: normalizeExtractionReviewDraft(record.review as ExtractionReviewDraft),
+          } satisfies SavedExtractionReviewRecord;
+        } catch {
+          return null;
+        }
       }),
     );
 
-    return records;
+    const sortedRecords = records
+      .filter((record): record is SavedExtractionReviewRecord => record !== null)
+      .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+
+    return typeof limit === "number" ? sortedRecords.slice(0, limit) : sortedRecords;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {
@@ -165,12 +201,24 @@ export async function saveExtractionReviewRecord(
   options: SaveExtractionReviewOptions = {},
 ) {
   if (shouldUseNeon(options.baseDir)) {
-    if (!options.workspaceId) {
+    const workspaceId = options.workspaceId;
+    if (!workspaceId) {
       throw new Error("workspaceId is required for Neon-backed extraction review storage.");
     }
 
     const updatedAt = options.updatedAt ?? new Date().toISOString();
     const normalizedReview = normalizeExtractionReviewDraft(review);
+    const existingRows = await dbQuery<{ workspace_id: string }>(
+      `
+        SELECT workspace_id
+        FROM app_extraction_reviews
+        WHERE submission_id = $1
+        LIMIT 1
+      `,
+      [submissionId],
+    );
+
+    assertWorkspaceOwnership("extraction review", workspaceId, existingRows[0]?.workspace_id);
 
     await dbQuery(
       `
@@ -181,8 +229,9 @@ export async function saveExtractionReviewRecord(
           workspace_id = EXCLUDED.workspace_id,
           updated_at = EXCLUDED.updated_at,
           review = EXCLUDED.review
+        WHERE app_extraction_reviews.workspace_id = EXCLUDED.workspace_id
       `,
-      [submissionId, options.workspaceId, updatedAt, serializeJson(normalizedReview)],
+      [submissionId, workspaceId, updatedAt, serializeJson(normalizedReview)],
     );
 
     return {

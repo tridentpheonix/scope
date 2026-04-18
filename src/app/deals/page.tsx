@@ -1,6 +1,5 @@
 import type { Route } from "next";
 import Link from "next/link";
-import { PlanGate } from "@/components/plan-gate";
 import { DealDeleteButton } from "@/components/deal-delete-button";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
@@ -10,10 +9,19 @@ import { readSavedDealSummaries } from "@/lib/saved-deals";
 
 export const dynamic = "force-dynamic";
 
-export default async function SavedDealsPage() {
+type SavedDealsPageProps = {
+  searchParams?: {
+    page?: string;
+  };
+};
+
+export default async function SavedDealsPage({ searchParams }: SavedDealsPageProps) {
   const authContext = await getCurrentWorkspaceContext();
   const planKey = authContext.workspace?.planKey;
   const hasHistoryAccess = canAccessSavedHistory(planKey);
+  const pageSize = 10;
+  const requestedPage = Number.parseInt(searchParams?.page ?? "1", 10);
+  const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   if (!hasHistoryAccess) {
     return (
@@ -37,51 +45,51 @@ export default async function SavedDealsPage() {
             </div>
           </div>
 
-          <PlanGate
-            planKey={planKey}
-            gate={canAccessSavedHistory}
-            featureName="Saved deal history"
-          >
-            {/* This will not be rendered because hasHistoryAccess is false */}
-            <div className="grid gap-4 rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8">
-              <div className="grid gap-2">
-                <span className="eyebrow">How to unlock this view</span>
-                <h2
-                  className="m-0 text-3xl font-semibold tracking-[-0.04em] text-slate-950"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Saved history is a paid workspace feature.
-                </h2>
-                <p className="m-0 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
-                  Upgrade the workspace to keep review and proposal history across deals. You can
-                  still start a fresh brief from the launchpad while you decide whether saved
-                  history is worth it.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/pricing"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
-                >
-                  Compare plans
-                </Link>
-                <Link
-                  href="/"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-400"
-                >
-                  Back to launchpad
-                </Link>
-              </div>
+          <div className="grid gap-4 rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8">
+            <div className="grid gap-2">
+              <span className="eyebrow">How to unlock this view</span>
+              <h2
+                className="m-0 text-3xl font-semibold tracking-[-0.04em] text-slate-950"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Saved history is a paid workspace feature.
+              </h2>
+              <p className="m-0 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+                Upgrade the workspace to keep review and proposal history across deals. You can
+                still start a fresh brief from the launchpad while you decide whether saved
+                history is worth it.
+              </p>
             </div>
-          </PlanGate>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/pricing"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
+              >
+                Compare plans
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-400"
+              >
+                Back to launchpad
+              </Link>
+            </div>
+          </div>
         </section>
       </main>
     );
   }
 
 
-  const deals = await readSavedDealSummaries(undefined, authContext.workspace?.id);
+  const allDeals = await readSavedDealSummaries(undefined, authContext.workspace?.id, 100);
+  const totalDeals = allDeals.length;
+  const totalPages = Math.max(1, Math.ceil(totalDeals / pageSize));
+  const page = Math.min(currentPage, totalPages);
+  const startIndex = (page - 1) * pageSize;
+  const deals = allDeals.slice(startIndex, startIndex + pageSize);
+  const hasPreviousPage = page > 1;
+  const hasNextPage = startIndex + pageSize < totalDeals;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">
@@ -103,9 +111,9 @@ export default async function SavedDealsPage() {
               Reopen proposal work without hunting for IDs.
             </h1>
             <p className="m-0 max-w-3xl text-base leading-7 text-slate-700 md:text-lg">
-              This list keeps the MVP operational: founders can reopen intake submissions, internal
-              review, and proposal drafts from one place while ScopeOS is still in concierge-first
-              mode.
+              This list keeps the MVP operational: founders can reopen the most recent intake
+              submissions, internal review, and proposal drafts from one place while ScopeOS is
+              still in concierge-first mode.
             </p>
           </div>
 
@@ -122,6 +130,37 @@ export default async function SavedDealsPage() {
               View analytics dashboard
             </Link>
           </div>
+          {totalDeals > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-sm">
+              <span>
+                Showing {startIndex + 1}-{Math.min(startIndex + pageSize, totalDeals)} of {totalDeals} recent deals
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/deals?page=${Math.max(1, page - 1)}`}
+                  aria-disabled={!hasPreviousPage}
+                  className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition ${
+                    hasPreviousPage
+                      ? "border-slate-300 bg-white text-slate-900 hover:border-slate-400"
+                      : "pointer-events-none border-slate-200 bg-slate-100 text-slate-400"
+                  }`}
+                >
+                  Previous
+                </Link>
+                <Link
+                  href={`/deals?page=${Math.min(totalPages, page + 1)}`}
+                  aria-disabled={!hasNextPage}
+                  className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition ${
+                    hasNextPage
+                      ? "border-slate-300 bg-white text-slate-900 hover:border-slate-400"
+                      : "pointer-events-none border-slate-200 bg-slate-100 text-slate-400"
+                  }`}
+                >
+                  Next
+                </Link>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {deals.length === 0 ? (
@@ -216,6 +255,17 @@ export default async function SavedDealsPage() {
                       </span>
                       <span
                         className={`rounded-full border px-3 py-2 ${
+                          deal.hasAttachment
+                            ? "border-amber-200 bg-amber-50 text-amber-800"
+                            : "border-slate-200 bg-slate-50"
+                        }`}
+                      >
+                        {deal.hasAttachment
+                          ? deal.attachmentLabel ?? "Client materials saved"
+                          : "No attachment"}
+                      </span>
+                      <span
+                        className={`rounded-full border px-3 py-2 ${
                           deal.hasSavedReview
                             ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                             : "border-slate-200 bg-slate-50"
@@ -256,6 +306,14 @@ export default async function SavedDealsPage() {
                     >
                       Open proposal draft
                     </Link>
+                    {deal.hasAttachment ? (
+                      <a
+                        href={`/api/deals/${deal.submissionId}/attachment`}
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
+                      >
+                        Download client materials
+                      </a>
+                    ) : null}
                     <DealDeleteButton submissionId={deal.submissionId} />
                   </div>
                 </article>

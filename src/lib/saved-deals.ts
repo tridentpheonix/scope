@@ -17,6 +17,8 @@ export type SavedDealSummary = {
   lastTouchedAt: string;
   hasSavedReview: boolean;
   hasSavedProposalPack: boolean;
+  hasAttachment: boolean;
+  attachmentLabel: string | null;
   currentStageLabel: string;
 };
 
@@ -35,11 +37,15 @@ function getCurrentStageLabel(
   return "Intake saved";
 }
 
-export async function readSavedDealSummaries(baseDir?: string, workspaceId?: string) {
+export async function readSavedDealSummaries(
+  baseDir?: string,
+  workspaceId?: string,
+  limit = 100,
+) {
   const [submissions, extractionReviews, proposalPacks] = await Promise.all([
-    readRiskCheckSubmissions(baseDir, workspaceId),
-    readExtractionReviewRecords(baseDir, workspaceId),
-    readProposalPackRecords(baseDir, workspaceId),
+    readRiskCheckSubmissions(baseDir, workspaceId, limit),
+    readExtractionReviewRecords(baseDir, workspaceId, limit),
+    readProposalPackRecords(baseDir, workspaceId, limit),
   ]);
 
   const extractionReviewMap = new Map(
@@ -72,11 +78,14 @@ export async function readSavedDealSummaries(baseDir?: string, workspaceId?: str
         lastTouchedAt,
         hasSavedReview: Boolean(extractionReview),
         hasSavedProposalPack: Boolean(proposalPack),
+        hasAttachment: Boolean(submission.attachment),
+        attachmentLabel: submission.attachment?.originalName ?? null,
         currentStageLabel: getCurrentStageLabel(
           Boolean(extractionReview),
           Boolean(proposalPack),
         ),
       } satisfies SavedDealSummary;
     })
-    .sort((left, right) => Date.parse(right.lastTouchedAt) - Date.parse(left.lastTouchedAt));
+    .sort((left, right) => Date.parse(right.lastTouchedAt) - Date.parse(left.lastTouchedAt))
+    .slice(0, limit);
 }

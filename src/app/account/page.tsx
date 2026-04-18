@@ -131,6 +131,12 @@ export default async function AccountPage() {
                   >
                     Analytics
                   </Link>
+                  <Link
+                    href="/feedback"
+                    className="btn btn-outline"
+                  >
+                    Pilot feedback
+                  </Link>
                 </div>
               </div>
             </div>

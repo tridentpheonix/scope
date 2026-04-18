@@ -88,19 +88,19 @@ pnpm eval:ai
 
 ## Launch checklist
 
-- [ ] Confirm sign-in and launchpad rendering locally
-- [ ] Confirm risk-check submission creates a submission record
-- [ ] Confirm extraction review opens and proposal pack loads
-- [ ] Confirm the AI provider badge shows the expected provider
-- [ ] Confirm the saved AI history restores after refresh
-- [ ] Confirm billing checkout and billing portal still work
-- [ ] Confirm the browser smoke passes end to end
-- [ ] Confirm build passes
-- [ ] Confirm launch docs are current
+- [x] Confirm sign-in and launchpad rendering locally
+- [x] Confirm risk-check submission creates a submission record
+- [x] Confirm extraction review opens and proposal pack loads
+- [x] Confirm the AI provider badge shows the expected provider
+- [x] Confirm the saved AI history restores after refresh
+- [x] Confirm billing checkout and billing portal still work
+- [x] Confirm the browser smoke passes end to end
+- [x] Confirm build passes
+- [x] Confirm launch docs are current
 
 ## Known limits
 
-- There is still a Next.js dynamic server usage warning for `/risk-check` during build, but the build passes.
+- No blocking build warnings remain in the current launch flow.
 - The local dev auth session cookie is a QA convenience and should remain dev-only.
 - The AI timeout is intentionally bounded so slow live generation falls back instead of hanging the browser flow.
 
@@ -108,4 +108,6 @@ pnpm eval:ai
 
 - The old smoke-test bypass helper has been removed.
 - Browser QA now uses a real Neon Auth session plus a dev-only local cookie fallback.
-- The next launch-readiness step is to finish the remaining billing edge-case cleanup and final handoff polish.
+- Launch-readiness cleanup is complete; the next step is post-launch feedback and follow-up polish only.
+- Use `docs/pilot-feedback.md` as the intake playbook for the first real users.
+- The in-app feedback inbox now lives at `/feedback`.

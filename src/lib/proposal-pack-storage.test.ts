@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   readProposalPackRecord,
+  readProposalPackRecords,
   saveProposalPackRecord,
 } from "./proposal-pack-storage";
 
@@ -37,9 +38,24 @@ describe("proposal pack storage", () => {
     );
 
     const record = await readProposalPackRecord("pack-1", baseDir);
+    await fs.writeFile(
+      path.join(baseDir, "proposal-packs", "broken.json"),
+      JSON.stringify({
+        submissionId: "broken",
+        updatedAt: "2026-04-11T01:00:00.000Z",
+      }),
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(baseDir, "proposal-packs", "malformed.json"),
+      "{not-json",
+      "utf8",
+    );
+    const records = await readProposalPackRecords(baseDir);
 
     expect(record?.submissionId).toBe("pack-1");
     expect(record?.clientBlocks.assumptions).toContain("approved copy");
     expect(record?.updatedAt).toBe("2026-04-11T00:00:00.000Z");
+    expect(records).toHaveLength(1);
   });
 });

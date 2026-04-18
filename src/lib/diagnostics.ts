@@ -1,8 +1,18 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { shipDiagnosticToWebhook } from "./observability";
 
 export type DiagnosticLevel = "info" | "warn" | "error";
-export type DiagnosticArea = "auth" | "billing" | "intake" | "ai" | "webhook";
+export type DiagnosticArea =
+  | "auth"
+  | "billing"
+  | "intake"
+  | "ai"
+  | "webhook"
+  | "deals"
+  | "analytics"
+  | "support"
+  | "maintenance";
 
 export type DiagnosticError = {
   name: string;
@@ -97,6 +107,10 @@ export async function recordDiagnostic(
 
   const logger = level === "error" ? console.error : level === "warn" ? console.warn : console.info;
   logger(line);
+
+  void shipDiagnosticToWebhook(entry).catch(() => {
+    // Hosted observability must never break the request path.
+  });
 
   try {
     const diagnosticsFile = path.join(baseDir, "diagnostics.ndjson");

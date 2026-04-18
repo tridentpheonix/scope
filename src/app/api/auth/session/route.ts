@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server";
 import { isNeonAuthConfigured } from "@/lib/env";
+import { readJsonBody } from "@/lib/request-body";
 
 export async function POST(request: Request) {
   if (!isNeonAuthConfigured()) {
@@ -11,13 +12,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Authentication is not configured." }, { status: 503 });
   }
 
-  const body = (await request.json().catch(() => null)) as
-    | { mode?: string; email?: string; password?: string; name?: string }
-    | null;
+  const body = await readJsonBody<{
+    mode?: string;
+    email?: string;
+    password?: string;
+    name?: string;
+  }>(request);
 
   if (!body?.email || !body.password || !body.mode) {
     return NextResponse.json(
       { ok: false, message: "Missing email, password, or auth mode." },
+      { status: 400 },
+    );
+  }
+
+  if (body.mode !== "sign-up" && body.mode !== "sign-in") {
+    return NextResponse.json(
+      { ok: false, message: "Invalid auth mode." },
       { status: 400 },
     );
   }

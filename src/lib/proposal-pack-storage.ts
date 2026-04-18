@@ -2,6 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { dbQuery, parseJson, serializeJson } from "./db";
 import { isNeonConfigured } from "./env";
+import { isPlainObject, tryParseJson } from "./json-safe";
+import { assertWorkspaceOwnership } from "./workspace-scope";
 
 export type SavedProposalPackRecord = {
   submissionId: string;
@@ -71,7 +73,22 @@ export async function readProposalPackRecord(
 
   try {
     const content = await fs.readFile(filePath, "utf8");
-    return JSON.parse(content) as SavedProposalPackRecord;
+    const record = tryParseJson<SavedProposalPackRecord>(content);
+    if (
+      !isPlainObject(record) ||
+      typeof record.submissionId !== "string" ||
+      typeof record.updatedAt !== "string" ||
+      !isPlainObject(record.clientBlocks) ||
+      !Object.values(record.clientBlocks).every((value) => typeof value === "string")
+    ) {
+      return null;
+    }
+
+    return {
+      submissionId: record.submissionId,
+      updatedAt: record.updatedAt,
+      clientBlocks: record.clientBlocks as Record<string, string>,
+    };
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {
@@ -82,7 +99,11 @@ export async function readProposalPackRecord(
   }
 }
 
-export async function readProposalPackRecords(baseDir = defaultDataDir, workspaceId?: string) {
+export async function readProposalPackRecords(
+  baseDir = defaultDataDir,
+  workspaceId?: string,
+  limit?: number,
+) {
   if (shouldUseNeon(baseDir)) {
     if (!workspaceId) {
       return [] satisfies SavedProposalPackRecord[];
@@ -98,8 +119,9 @@ export async function readProposalPackRecords(baseDir = defaultDataDir, workspac
         FROM app_proposal_packs
         WHERE workspace_id = $1
         ORDER BY updated_at DESC
+        ${typeof limit === "number" ? "LIMIT $2" : ""}
       `,
-      [workspaceId],
+      typeof limit === "number" ? [workspaceId, limit] : [workspaceId],
     );
 
     return rows.map((row) => ({
@@ -120,11 +142,26 @@ export async function readProposalPackRecords(baseDir = defaultDataDir, workspac
     const records = await Promise.all(
       fileNames.map(async (fileName) => {
         const content = await fs.readFile(path.join(proposalPackDir, fileName), "utf8");
-        return JSON.parse(content) as SavedProposalPackRecord;
+        const record = tryParseJson<SavedProposalPackRecord>(content);
+
+        if (
+          !isPlainObject(record) ||
+          typeof record.submissionId !== "string" ||
+          typeof record.updatedAt !== "string" ||
+          !isPlainObject(record.clientBlocks)
+        ) {
+          return null;
+        }
+
+        return record as SavedProposalPackRecord;
       }),
     );
 
-    return records;
+    const sortedRecords = records
+      .filter((record): record is SavedProposalPackRecord => record !== null)
+      .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+
+    return typeof limit === "number" ? sortedRecords.slice(0, limit) : sortedRecords;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {
@@ -141,11 +178,24 @@ export async function saveProposalPackRecord(
   options: SaveProposalPackOptions = {},
 ) {
   if (shouldUseNeon(options.baseDir)) {
-    if (!options.workspaceId) {
+    const workspaceId = options.workspaceId;
+    if (!workspaceId) {
       throw new Error("workspaceId is required for Neon-backed proposal pack storage.");
     }
 
     const updatedAt = options.updatedAt ?? new Date().toISOString();
+    const existingRows = await dbQuery<{ workspace_id: string }>(
+      `
+        SELECT workspace_id
+        FROM app_proposal_packs
+        WHERE submission_id = $1
+        LIMIT 1
+      `,
+      [submissionId],
+    );
+
+    assertWorkspaceOwnership("proposal pack", workspaceId, existingRows[0]?.workspace_id);
+
     await dbQuery(
       `
         INSERT INTO app_proposal_packs (submission_id, workspace_id, updated_at, client_blocks)
@@ -155,8 +205,9 @@ export async function saveProposalPackRecord(
           workspace_id = EXCLUDED.workspace_id,
           updated_at = EXCLUDED.updated_at,
           client_blocks = EXCLUDED.client_blocks
+        WHERE app_proposal_packs.workspace_id = EXCLUDED.workspace_id
       `,
-      [submissionId, options.workspaceId, updatedAt, serializeJson(clientBlocks)],
+      [submissionId, workspaceId, updatedAt, serializeJson(clientBlocks)],
     );
 
     return {

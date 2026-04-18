@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { PlanGate } from "@/components/plan-gate";
 import { ExportBlockerForm } from "@/components/export-blocker-form";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
 import { canAccessAnalytics } from "@/lib/billing-gates";
-import { readAnalyticsEvents, summarizeAnalyticsEvents } from "@/lib/analytics-storage";
-import { readExportBlockerSignals } from "@/lib/export-blocker-storage";
+import { readAnalyticsDashboard } from "@/lib/analytics-storage";
 import { formatDateTimeLabel } from "@/lib/risk-check-presenters";
 
 export const dynamic = "force-dynamic";
@@ -37,23 +35,45 @@ export default async function AnalyticsPage() {
             </div>
           </div>
 
-          <PlanGate
-            planKey={planKey}
-            gate={canAccessAnalytics}
-            featureName="Analytics dashboard"
-          >
-            {/* This will not be rendered because hasAnalyticsAccess is false */}
-            <div />
-          </PlanGate>
+          <div className="grid gap-4 rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8">
+            <div className="grid gap-2">
+              <span className="eyebrow">How to unlock this view</span>
+              <h2
+                className="m-0 text-3xl font-semibold tracking-[-0.04em] text-slate-950"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Analytics is a paid workspace feature.
+              </h2>
+              <p className="m-0 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+                Upgrade the workspace to track proposal-pack usage, surface export blockers, and
+                understand what the team is doing across live deals.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/pricing"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
+              >
+                Compare plans
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-400"
+              >
+                Back to launchpad
+              </Link>
+            </div>
+          </div>
         </section>
       </main>
     );
   }
 
 
-  const events = await readAnalyticsEvents(undefined, authContext.workspace?.id);
-  const summary = summarizeAnalyticsEvents(events, 25);
-  const exportBlockers = await readExportBlockerSignals(undefined, authContext.workspace?.id);
+  const dashboard = await readAnalyticsDashboard(undefined, authContext.workspace?.id, 25, 5);
+  const summary = dashboard.summary;
+  const exportBlockers = dashboard.exportBlockers.recentSignals;
   const eventNames = Object.keys(summary.countsByName).sort((left, right) =>
     summary.countsByName[right] - summary.countsByName[left],
   );
@@ -203,7 +223,7 @@ export default async function AnalyticsPage() {
                     Signals logged
                   </div>
                   <div className="mt-2 text-2xl font-semibold text-slate-950">
-                    {exportBlockers.length}
+                    {dashboard.exportBlockers.totalSignals}
                   </div>
                   <div className="mt-2 text-xs text-slate-500">
                     Last updated {exportBlockers[0] ? formatDateTimeLabel(exportBlockers[0].createdAt) : "—"}

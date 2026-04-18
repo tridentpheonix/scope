@@ -9,17 +9,13 @@
 /coverage
 
 # local env
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-!.env.example
+.env*
 
 # runtime data for concierge submissions
 /data/risk-check-submissions.ndjson
 /data/events.ndjson
 /data/export-blockers.ndjson
+/data/pilot-feedback.ndjson
 /data/diagnostics.ndjson
 /data/uploads/*
 !/data/uploads/.gitkeep
@@ -33,5 +29,8 @@
 # misc
 .DS_Store
 *.log
+devtmp.*
+scratch/*.out
+scratch/*.err
 
 .vercel
