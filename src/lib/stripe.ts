@@ -1,5 +1,5 @@
-﻿import Stripe from "stripe";
-import { appEnv, isStripeConfigured, requireEnv } from "./env";
+import Stripe from "stripe";
+import { appEnv, isStripeCheckoutConfigured, requireEnv } from "./env";
 
 let stripeInstance: Stripe | null = null;
 
@@ -45,6 +45,7 @@ export function getAbsoluteUrl(request: Request, path: string) {
 }
 
 export function canUseStripeBilling() {
-  return isStripeConfigured();
+  return isStripeCheckoutConfigured();
 }
+
 

@@ -104,7 +104,7 @@ export default async function PricingPage() {
           {!billingReady ? (
             <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-7 text-amber-950 shadow-sm">
               <strong className="block text-base">Stripe billing is not configured yet.</strong>
-              Add the Stripe secret, webhook secret, and monthly price IDs before checkout can go live.
+              Add the Stripe secret and monthly price IDs before checkout can go live.
             </div>
           ) : null}
         </div>
@@ -180,5 +180,6 @@ export default async function PricingPage() {
     </main>
   );
 }
+
 
 

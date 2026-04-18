@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { appEnv, isStripeConfigured, requireEnv } from "@/lib/env";
+import { appEnv, isStripeWebhookConfigured, requireEnv } from "@/lib/env";
 import { recordDiagnostic } from "@/lib/diagnostics";
 import { getStripeServer } from "@/lib/stripe";
 import { syncWorkspaceBillingFromStripeEvent } from "@/lib/stripe-billing-sync";
@@ -8,7 +8,7 @@ import { syncWorkspaceBillingFromStripeEvent } from "@/lib/stripe-billing-sync";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  if (!isStripeConfigured()) {
+  if (!isStripeWebhookConfigured()) {
     void recordDiagnostic("warn", "webhook", "stripe_webhook_not_configured", {
       route: "/api/stripe/webhook",
       status: 503,
@@ -67,3 +67,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

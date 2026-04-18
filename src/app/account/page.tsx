@@ -91,7 +91,7 @@ export default async function AccountPage() {
               ) : (
                 <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-7 text-amber-950">
                   <strong className="block text-base">Stripe billing is not configured yet.</strong>
-                  Add the Stripe environment variables to enable subscription payments.
+                  Add the Stripe secret and monthly price IDs to enable subscription payments.
                 </div>
               )}
             </div>
@@ -158,5 +158,6 @@ export default async function AccountPage() {
     </main>
   );
 }
+
 
 

@@ -55,13 +55,25 @@ export function isObservabilityConfigured() {
   return Boolean(appEnv.observabilityWebhookUrl);
 }
 
-export function isStripeConfigured() {
+export function isStripeCheckoutConfigured() {
+  return Boolean(
+    appEnv.stripeSecretKey &&
+      appEnv.stripePriceSoloMonthly &&
+      appEnv.stripePriceTeamMonthly,
+  );
+}
+
+export function isStripeWebhookConfigured() {
   return Boolean(
     appEnv.stripeSecretKey &&
       appEnv.stripeWebhookSecret &&
       appEnv.stripePriceSoloMonthly &&
       appEnv.stripePriceTeamMonthly,
   );
+}
+
+export function isStripeConfigured() {
+  return isStripeWebhookConfigured();
 }
 
 export function requireEnv(value: string | null, name: string) {
