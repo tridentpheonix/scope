@@ -44,3 +44,5 @@
 - Removed an unused import from src/app/auth/sign-in/page.tsx surfaced by the targeted lint pass.
 - Re-ran targeted ESLint on the touched auth/pricing files and a full pnpm build; both passed.
 
+- Added a visible header-level sign-out control so users can clear a bad session without first reaching the account page.
+

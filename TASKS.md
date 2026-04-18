@@ -15,8 +15,7 @@
    - billing edge-case cleanup
    - final QA, docs, and handoff polish
 
-## NOW
-- verify the live Vercel deployment after the auth/checkout fix lands on `main`.
+## NOW`r`n- verify the live Vercel deployment after the auth/checkout fix lands on `main`.`r`n- confirm the new header sign-out control is visible on authenticated pages.
 
 ## NEXT
 - if the live browser still loops after deploy, clear stale auth state by signing out and signing back in once.
@@ -88,3 +87,4 @@
 - [S35] surfaced the active AI provider in the extraction-review and proposal-pack AI panels so founders can see when NVIDIA handled the run.
 - [S36] exposed the AI provider in the saved-run history cards as well, so past generations remain explainable after refresh.
 - [S37] turned the AI provider labels into friendly product-facing names so the UI reads as NVIDIA/OpenAI/Fallback instead of raw slugs.
+

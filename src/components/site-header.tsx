@@ -1,6 +1,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { getCurrentWorkspaceContextOrNull } from "@/lib/auth/server";
+import { SignOutButtonInner } from "@/components/sign-out-button";
 
 type SiteHeaderProps = {
   ctaHref?: Route;
@@ -72,12 +73,20 @@ export async function SiteHeader({
           )}
         </nav>
 
-        <Link
-          href={resolvedCtaHref}
-          className="btn btn-small border-sky-300/30 bg-sky-400/12 text-sky-100 hover:bg-sky-400/20"
-        >
-          {resolvedCtaLabel}
-        </Link>
+        <div className="flex items-center gap-2">
+          {authContext?.user ? (
+            <SignOutButtonInner
+              label="Sign out"
+              className="btn-small border-white/15 bg-white/5 text-white hover:bg-white/10"
+            />
+          ) : null}
+          <Link
+            href={resolvedCtaHref}
+            className="btn btn-small border-sky-300/30 bg-sky-400/12 text-sky-100 hover:bg-sky-400/20"
+          >
+            {resolvedCtaLabel}
+          </Link>
+        </div>
       </div>
     </header>
   );
