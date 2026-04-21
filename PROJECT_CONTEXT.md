@@ -3,15 +3,15 @@
 - **Project:** ScopeOS
 - **Baton Holder:** codex
 - **Current Goal:** Finish the MongoDB cutover cleanup, keep the live deployment verified, and push the repo cleanup to `main`.
-- **Current Branch / State:** local workspace updated; production-style Next.js app already exists with MongoDB + first-party auth wired, the latest production deployment is live on Vercel, and the runtime source no longer contains Neon-era helper names.
+- **Current Branch / State:** local workspace updated; production-style Next.js app already exists with MongoDB + first-party auth wired, the latest production deployment is live on Vercel, and the runtime source no longer contains old backend-era helper names.
 
 ## What Changed Since Last Handoff
-- Swapped Neon auth/storage for MongoDB-backed auth and workspace persistence.
+- Swapped the old auth/storage stack for MongoDB-backed auth and workspace persistence.
 - Added `src/lib/mongo.ts` with connection caching, index bootstrapping, and a clean shutdown helper for one-off scripts.
 - Added first-party auth routes for sign-up, sign-in, and sign-out.
-- Removed the old Neon auth bridge routes.
+- Removed the old auth bridge routes.
 - Updated the repo MongoDB smoke script to load local env files and close the Mongo connection cleanly after the check.
-- Renamed the Mongo-backed storage compatibility helpers to match the current architecture and removed the dead Neon migration shim file.
+- Renamed the Mongo-backed storage compatibility helpers to match the current architecture and removed the dead migration shim file.
 - Updated the environment sample and local scripts to use `MONGODB_URI` / `MONGODB_DB_NAME`.
 - Confirmed the local MongoDB service is running and the app builds and serves with the Mongo config.
 
@@ -23,7 +23,7 @@
    - push the Mongo fixups to `main`
    - rotate any exposed secrets after verification
 3. **Follow-up hardening**
-   - trim remaining legacy Neon references in historical docs only if they keep causing confusion
+- trim remaining legacy backend references in historical docs only if they keep causing confusion
 
 ## What's Next
 - Verify the Mongo deployment after the fresh Vercel redeploy.

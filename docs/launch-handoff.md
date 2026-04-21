@@ -14,8 +14,8 @@ ScopeOS is a scoped-brief product for small web design agencies. The core flow i
 
 The app currently includes:
 
-- Neon Auth-based workspace access
-- Neon Postgres workspace storage
+- first-party email/password auth with app-owned session cookies
+- MongoDB-backed workspace storage
 - Stripe billing and plan gating
 - NVIDIA-compatible AI generation with deterministic fallback
 - provider labels and AI run history
@@ -28,9 +28,8 @@ Required env vars live in `C:/Users/satya/OneDrive/Desktop/ha ha ha ha/New idea/
 
 Minimum important values:
 
-- `DATABASE_URL`
-- `NEON_AUTH_BASE_URL`
-- `NEON_AUTH_COOKIE_SECRET`
+- `MONGODB_URI`
+- `MONGODB_DB_NAME`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `APP_BASE_URL`
@@ -74,7 +73,7 @@ Success should print JSON with `ok: true`.
 Use the lightest useful checks:
 
 ```powershell
-pnpm exec eslint src/lib/auth/server.ts src/app/api/auth/session/route.ts src/components/auth-panel.tsx scripts/browser-smoke.js --max-warnings=0
+pnpm exec eslint src/lib/mongo.ts src/lib/auth/first-party.ts src/components/auth-panel.tsx scripts/browser-smoke.js --max-warnings=0
 node scripts/browser-smoke.js
 pnpm build
 ```
@@ -107,7 +106,7 @@ pnpm eval:ai
 ## Handoff notes
 
 - The old smoke-test bypass helper has been removed.
-- Browser QA now uses a real Neon Auth session plus a dev-only local cookie fallback.
+- Browser QA now uses a real first-party auth session plus a dev-only local cookie fallback.
 - Launch-readiness cleanup is complete; the next step is post-launch feedback and follow-up polish only.
 - Use `docs/pilot-feedback.md` as the intake playbook for the first real users.
 - The in-app feedback inbox now lives at `/feedback`.
