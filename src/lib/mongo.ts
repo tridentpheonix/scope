@@ -27,6 +27,11 @@ export async function getMongoDb() {
   return client.db(requireEnv(appEnv.mongoDbName, "MONGODB_DB_NAME"));
 }
 
+export async function pingMongo() {
+  const db = await getMongoDb();
+  await db.admin().ping();
+}
+
 export async function closeMongoConnection() {
   if (!clientPromise) {
     return;
@@ -84,6 +89,16 @@ const mongoIndexes: IndexSpec[] = [
     collection: "sessions",
     index: { expiresAt: 1 },
     options: { expireAfterSeconds: 0, name: "sessions_expires_ttl" },
+  },
+  {
+    collection: "auth_rate_limits",
+    index: { expiresAt: 1 },
+    options: { expireAfterSeconds: 0, name: "auth_rate_limits_expires_ttl" },
+  },
+  {
+    collection: "stripe_webhook_events",
+    index: { expiresAt: 1 },
+    options: { expireAfterSeconds: 0, name: "stripe_webhook_events_expires_ttl" },
   },
   {
     collection: "risk_check_submissions",

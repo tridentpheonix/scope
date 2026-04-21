@@ -2,41 +2,35 @@
 
 - **Project:** ScopeOS
 - **Baton Holder:** codex
-- **Current Goal:** Finish the MongoDB cutover cleanup, keep the live deployment verified, and push the repo cleanup to `main`.
-- **Current Branch / State:** local workspace updated; production-style Next.js app already exists with MongoDB + first-party auth wired, the latest production deployment is live on Vercel, and the runtime source no longer contains old backend-era helper names.
+- **Current Goal:** Harden ScopeOS for production by adding auth rate limiting, a MongoDB health/readiness route, Stripe webhook idempotency, and operational runbook coverage without changing the modular-monolith architecture.
+- **Current Branch / State:** local non-git workspace updated with production-hardening code and docs; targeted tests, ESLint, and `pnpm build` all passed; the repo now includes Mongo-backed auth rate limiting, `GET /api/health`, Stripe webhook reservation/finalization helpers, and a production hardening runbook.
 
 ## What Changed Since Last Handoff
-- Swapped the old auth/storage stack for MongoDB-backed auth and workspace persistence.
-- Added `src/lib/mongo.ts` with connection caching, index bootstrapping, and a clean shutdown helper for one-off scripts.
-- Added first-party auth routes for sign-up, sign-in, and sign-out.
-- Removed the old auth bridge routes.
-- Updated the repo MongoDB smoke script to load local env files and close the Mongo connection cleanly after the check.
-- Renamed the Mongo-backed storage compatibility helpers to match the current architecture and removed the dead migration shim file.
-- Updated the environment sample and local scripts to use `MONGODB_URI` / `MONGODB_DB_NAME`.
-- Confirmed the local MongoDB service is running and the app builds and serves with the Mongo config.
-
-## GA Milestones
-1. **MongoDB deployment verification**
-   - keep the live Vercel app on the Mongo-backed production deploy
-   - smoke sign-in/sign-out and a protected page
-2. **Repo cleanup and handoff**
-   - push the Mongo fixups to `main`
-   - rotate any exposed secrets after verification
-3. **Follow-up hardening**
-- trim remaining legacy backend references in historical docs only if they keep causing confusion
+- Added Mongo-backed auth rate limiting for sign-in/sign-up with IP and email buckets plus 429 responses.
+- Added a MongoDB-backed health snapshot helper and `GET /api/health` readiness route.
+- Added Stripe webhook event reservation/finalization helpers so duplicate deliveries are ignored and retries remain safe after failures.
+- Added Mongo TTL/index coverage for auth rate limits and webhook event tracking.
+- Added unit tests for auth rate limiting, system health, and Stripe webhook event tracking.
+- Added `docs/ops/production-hardening.md` and linked it from the runbook as the operational checklist for backups, restore drills, rate limits, health checks, and webhook replay.
+- Verified the hardening slice with targeted Vitest, targeted ESLint, and a successful `pnpm build`.
 
 ## What's Next
-- Verify the Mongo deployment after the fresh Vercel redeploy.
-- Push the Mongo cleanup commit to `main`.
-- Rotate the exposed MongoDB user password after the deployment is confirmed.
+- Mirror or reconcile these changes into the deployable repo if needed, then deploy and verify the live health endpoint and auth limits in production.
+- Rotate the exposed MongoDB user password if that operational step has not already been completed.
+- Optionally add the remaining backlog items from the hardening roadmap: backup/restore drill automation, background-job offloading, and broader observability/alerting.
 
 ## Blockers / Open Questions
-- None blocking the code fix itself.
-- Live verification still depends on Vercel receiving a fresh deployment with the Mongo env vars active.
+- Production validation still needs a live deploy check against the configured Atlas cluster.
+- Existing historical Neon data is still not migrated into MongoDB by this hardening slice.
 
 ## Commands Run + Results
-- Ran `pnpm exec eslint src/lib/env.ts src/lib/analytics-storage.ts src/lib/attachment-reconciliation.ts src/lib/change-order-storage.ts src/lib/deal-deletion.ts src/lib/export-blocker-storage.ts src/lib/extraction-review-storage.ts src/lib/pilot-feedback-storage.ts src/lib/proposal-pack-storage.ts src/lib/risk-check-storage.ts src/lib/attachment-storage.ts --max-warnings=0` successfully.
+- Ran `winget install --id MongoDB.Server --exact --accept-source-agreements --accept-package-agreements` successfully.
+- Ran `pnpm install --offline=false` successfully and updated dependencies to include `mongodb` while removing Neon packages.
+- Ran `pnpm db:migrate` successfully after patching the local DB bootstrap script.
+- Ran `pnpm exec eslint src/lib/env.ts src/lib/mongo.ts src/lib/auth/first-party.ts src/lib/auth/server.ts src/lib/auth/client.ts src/lib/workspace-billing.ts src/app/api/auth/sign-up/route.ts src/app/api/auth/sign-in/route.ts src/app/api/auth/sign-out/route.ts src/app/api/auth/local-sign-out/route.ts src/components/auth-panel.tsx src/app/auth/sign-in/page.tsx middleware.ts src/lib/risk-check-storage.ts src/lib/extraction-review-storage.ts src/lib/proposal-pack-storage.ts src/lib/change-order-storage.ts src/lib/export-blocker-storage.ts src/lib/analytics-storage.ts src/lib/ai-runs.ts src/lib/pilot-feedback-storage.ts src/lib/deal-deletion.ts src/lib/attachment-reconciliation.ts src/app/pricing/page.tsx src/scripts/test-db.ts --max-warnings=0` successfully.
 - Ran `pnpm build` successfully.
-
-
-
+- Started `pnpm start`, requested `http://127.0.0.1:3000/auth/sign-in`, got HTTP 200, confirmed expected auth content, then stopped the local server.
+- Ran targeted Vitest for `src/lib/auth-rate-limit.test.ts`, `src/lib/system-health.test.ts`, and `src/lib/stripe-webhook-events.test.ts` successfully.
+- Ran targeted ESLint for the new hardening modules and routes successfully.
+- Ran `pnpm build` successfully with the new `/api/health` route included in the build manifest.
+- Re-ran targeted tests, targeted ESLint, and a final `pnpm build` after tightening the auth-rate-limit expiry guard.

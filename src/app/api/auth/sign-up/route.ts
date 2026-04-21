@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { attachSessionCookie, hashPassword, normalizeEmail } from "@/lib/auth/first-party";
+import { AUTH_RATE_LIMIT_RULES, checkAuthRateLimits, getRequestIp } from "@/lib/auth-rate-limit";
+import { recordDiagnostic } from "@/lib/diagnostics";
 import { ensureWorkspaceForUser } from "@/lib/workspace-billing";
 import { ensureMongoIndexes, getMongoCollection } from "@/lib/mongo";
 import { isAuthConfigured } from "@/lib/env";
@@ -22,9 +24,48 @@ type UserDocument = {
   updatedAt: string;
 };
 
+function buildRateLimitedResponse(retryAfterSeconds: number) {
+  return NextResponse.json(
+    {
+      ok: false,
+      message: "Too many sign-up attempts. Try again later.",
+      retryAfterSeconds,
+    },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(retryAfterSeconds),
+      },
+    },
+  );
+}
+
 export async function POST(request: Request) {
   if (!isAuthConfigured()) {
     return NextResponse.json({ ok: false, message: "MongoDB auth is not configured." }, { status: 503 });
+  }
+
+  const ipDecision = await checkAuthRateLimits([
+    {
+      ...AUTH_RATE_LIMIT_RULES.signUp.ip,
+      subject: getRequestIp(request),
+    },
+  ]);
+
+  if (!ipDecision.allowed) {
+    void recordDiagnostic("warn", "auth", "auth_sign_up_rate_limited", {
+      route: "/api/auth/sign-up",
+      status: 429,
+      message: "Sign-up attempts were rate limited.",
+      details: {
+        key: ipDecision.key,
+        attempts: ipDecision.attempts,
+        remaining: 0,
+        retryAfterSeconds: ipDecision.retryAfterSeconds,
+      },
+    });
+
+    return buildRateLimitedResponse(ipDecision.retryAfterSeconds);
   }
 
   const body = await readJsonBody<unknown>(request);
@@ -32,6 +73,29 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return NextResponse.json({ ok: false, message: "Enter a valid name, email, and password." }, { status: 400 });
+  }
+
+  const emailDecision = await checkAuthRateLimits([
+    {
+      ...AUTH_RATE_LIMIT_RULES.signUp.email,
+      subject: normalizeEmail(parsed.data.email),
+    },
+  ]);
+
+  if (!emailDecision.allowed) {
+    void recordDiagnostic("warn", "auth", "auth_sign_up_rate_limited", {
+      route: "/api/auth/sign-up",
+      status: 429,
+      message: "Sign-up attempts were rate limited.",
+      details: {
+        key: emailDecision.key,
+        attempts: emailDecision.attempts,
+        remaining: 0,
+        retryAfterSeconds: emailDecision.retryAfterSeconds,
+      },
+    });
+
+    return buildRateLimitedResponse(emailDecision.retryAfterSeconds);
   }
 
   await ensureMongoIndexes();

@@ -4,6 +4,22 @@
 
 ---
 
+## Production hardening
+
+For the live MongoDB + first-party-auth stack, see:
+
+- `docs/ops/production-hardening.md`
+
+That file covers:
+
+- auth rate limits
+- health checks
+- webhook dedupe
+- backup/restore drill steps
+- schema-change hygiene
+
+---
+
 ## Quick Commands
 
 ### Status Check
