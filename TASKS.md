@@ -1,28 +1,27 @@
 # TASKS
 
 ## MILESTONES
-1. **Product shell polish**
-   - signed-in launchpad on the home page
-   - clearer next action and recent-deal shortcuts
-   - better empty states for first-time users
-2. **Reliability + observability**
-   - browser smoke coverage for the concierge flow
-   - structured logging / failure visibility for core paths
-3. **AI quality + recovery**
-   - prompt/model evaluation loop
-   - clearer AI history, provider labels, and recovery paths
-4. **Launch readiness**
-   - billing edge-case cleanup
-   - final QA, docs, and handoff polish
+1. **MongoDB deployment verification**
+   - confirm the live app is reading the new MongoDB env vars
+   - smoke the sign-in and protected-page flows
+2. **Repo cleanup and push**
+   - commit the Mongo helper/script fixups
+   - push `main` to GitHub
+3. **Follow-up hardening**
+   - rotate the exposed MongoDB user password
+   - remove legacy Neon references only if they still affect runtime
 
-## NOW`r`n- verify the live Vercel deployment after the auth/checkout fix lands on `main`.`r`n- confirm the new header sign-out control is visible on authenticated pages.
+## NOW
+- verify the live Vercel deployment after the Mongo env vars and repo cleanup are in place.
+- push the Mongo script/helper fixups to `main`.
 
 ## NEXT
-- if the live browser still loops after deploy, clear stale auth state by signing out and signing back in once.
+- if the live app still shows the missing-config warning, trigger a fresh Vercel deployment from the updated `main`.
+- rotate the MongoDB user password once the deployment is confirmed.
 
 ## LATER
-- [M3.2] expand diagnostics capture or alert routing only if auth, billing, or maintenance edge cases show recurring patterns in smoke or pilot use.
-- [M4.5] remove the now-unused `/api/auth/session` bridge if no internal tooling still depends on it.
+- remove legacy Neon env references from docs only if they keep causing confusion.
+- consider trimming old migration/compatibility code only after the Mongo deployment is stable.
 
 ## COMPLETED
 - [H10] polished the signed-in workspace launchpad cards to show attachment state and a direct client-material download action.

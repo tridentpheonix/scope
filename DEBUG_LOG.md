@@ -52,3 +52,9 @@
 - Updated the sign-out button to do a hard navigation (window.location.replace) after clearing auth state so the next page load always re-renders from fresh server auth.
 - Reordered the header actions so the primary CTA stays first and the sign-out control becomes a lighter secondary action.
 
+## 2026-04-21
+- Verified the live MongoDB deployment still showed the old missing-config warning, which meant the new env vars had not been picked up by the active production deployment yet.
+- Synced the repo's MongoDB smoke script with the local workspace fix so it loads `.env` and closes the Mongo connection cleanly after the check.
+- Added a `closeMongoConnection()` helper to the Mongo client wrapper so one-off scripts can exit cleanly after bootstrapping indexes.
+- Updated the project memory files to reflect the MongoDB cutover goal and the current push/verification step.
+

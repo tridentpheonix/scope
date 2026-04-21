@@ -27,6 +27,18 @@ export async function getMongoDb() {
   return client.db(requireEnv(appEnv.mongoDbName, "MONGODB_DB_NAME"));
 }
 
+export async function closeMongoConnection() {
+  if (!clientPromise) {
+    return;
+  }
+
+  const client = await clientPromise;
+  await client.close();
+  clientPromise = null;
+  globalThis.__scopeosMongoClientPromise = undefined;
+  globalThis.__scopeosMongoIndexesPromise = undefined;
+}
+
 export async function getMongoCollection<TSchema extends Document>(name: string) {
   const db = await getMongoDb();
   return db.collection<TSchema>(name);
