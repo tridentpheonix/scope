@@ -10,6 +10,7 @@ describe("system health", () => {
   it("reports healthy when Mongo is configured and reachable", async () => {
     vi.stubEnv("MONGODB_URI", "mongodb://127.0.0.1:27017");
     vi.stubEnv("MONGODB_DB_NAME", "scopeos");
+    vi.stubEnv("ALERT_WEBHOOK_URL", "");
 
     const { getSystemHealthSnapshot } = await import("./system-health");
     const snapshot = await getSystemHealthSnapshot({
@@ -30,6 +31,9 @@ describe("system health", () => {
           configured: true,
           ok: true,
         },
+        alerting: {
+          configured: false,
+        },
       },
     });
     expect(snapshot.checks.mongo.latencyMs).not.toBeNull();
@@ -38,6 +42,7 @@ describe("system health", () => {
   it("reports unhealthy when Mongo ping fails", async () => {
     vi.stubEnv("MONGODB_URI", "mongodb://127.0.0.1:27017");
     vi.stubEnv("MONGODB_DB_NAME", "scopeos");
+    vi.stubEnv("ALERT_WEBHOOK_URL", "");
 
     const { getSystemHealthSnapshot } = await import("./system-health");
     const snapshot = await getSystemHealthSnapshot({

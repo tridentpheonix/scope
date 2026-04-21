@@ -21,18 +21,19 @@
    - operational runbook coverage
 
 ## NOW
-- the backup/restore drill scripts are in place in the working tree.
-- next step: commit/push the drill slice and decide whether to add lightweight alerting next.
+- the alert webhook shipping slice is in the working tree.
+- next step: commit/push the alerting slice and keep moving through the observability roadmap.
 
 ## NEXT
-- verify the drill scripts in a staging copy or local drill environment.
-- confirm Atlas native backup settings in production.
-- optionally add a minimal alerting/dashboard hook for the critical diagnostics path.
+- verify the alerting slice in production after deploy.
+- continue the observability roadmap with incident visibility and/or a lightweight operator dashboard if needed.
+- keep the backup/restore drill workflow available for staging restores.
 
 ## LATER
 - [H19] create a one-time Neon -> Mongo migration utility if old production data must be preserved.
 - [H20] remove stale Neon terminology from remaining historical docs and helper names.
 - [H21] move slow, failure-prone work off the request path with queue/background-job handling.
+- [H22] add persistent incident visibility if webhook-based alerting proves too noisy or too thin.
 
 ## COMPLETED
 - [H18] installed local MongoDB Community Server, configured `.env` for `mongodb://127.0.0.1:27017`, and completed local bootstrap/build/smoke verification.

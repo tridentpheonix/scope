@@ -14,6 +14,7 @@ That file covers:
 
 - auth rate limits
 - health checks
+- observability and alert webhooks
 - webhook dedupe
 - backup/restore drill steps
 - schema-change hygiene

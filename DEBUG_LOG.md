@@ -1,6 +1,14 @@
 # DEBUG LOG
 
 ## 2026-04-22
+- Added `src/lib/alerting.ts` so error diagnostics can be shipped to a dedicated alert webhook.
+- Wired `src/lib/diagnostics.ts` to forward error diagnostics to the alert sink without breaking the request path.
+- Added `ALERT_WEBHOOK_URL` / `ALERT_WEBHOOK_SECRET` handling and documented the new env vars in the repo.
+- Added unit/integration tests for alert payloads and the diagnostics -> alerting path.
+- Added alerting visibility to the health snapshot and production hardening docs.
+- Verified the alerting slice with targeted Vitest, targeted ESLint, and a successful `pnpm build`.
+
+## 2026-04-22
 - Added MongoDB backup/restore drill helpers in `src/lib/mongo-backup.ts` using BSON EJSON so date fields and other Mongo-native values round-trip correctly.
 - Added `scripts/mongo-backup.ts` and `scripts/mongo-restore.ts` for repeatable staging drills.
 - Added a shared local env loader in `src/scripts/load-local-env.ts` and reused it from `src/scripts/test-db.ts`.

@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { shipDiagnosticToAlertWebhook } from "./alerting";
 import { shipDiagnosticToWebhook } from "./observability";
 
 export type DiagnosticLevel = "info" | "warn" | "error";
@@ -110,6 +111,10 @@ export async function recordDiagnostic(
 
   void shipDiagnosticToWebhook(entry).catch(() => {
     // Hosted observability must never break the request path.
+  });
+
+  void shipDiagnosticToAlertWebhook(entry).catch(() => {
+    // Alerts must never break the request path.
   });
 
   try {

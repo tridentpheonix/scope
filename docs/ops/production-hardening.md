@@ -11,6 +11,9 @@
 - **Health endpoint**
   - `GET /api/health`
   - returns Mongo/auth readiness plus feature-flag status
+- **Observability and alerts**
+  - warning/error diagnostics can be shipped to an observability webhook
+  - error diagnostics can also be shipped to an alert webhook
 - **Stripe webhook dedupe**
   - duplicate deliveries are ignored safely
   - processed/failed webhook events are tracked in MongoDB
@@ -97,6 +100,7 @@ Expected behavior:
 
 - `200` when MongoDB is reachable and auth is configured
 - `503` when MongoDB is missing or unreachable
+- the health payload also reports whether observability and alerting webhooks are configured
 
 ### What to inspect if health is red
 
@@ -104,6 +108,7 @@ Expected behavior:
 2. MongoDB Atlas network access
 3. Atlas cluster status
 4. Vercel deployment logs
+5. Alert webhook configuration if you expect failure notifications
 
 ## Phase 4: Stripe webhook reliability
 
@@ -152,6 +157,7 @@ When adding or changing document fields:
 Before shipping a production change:
 
 - [ ] Health endpoint returns `200`
+- [ ] Alert webhook is configured if you want critical error notifications
 - [ ] Auth sign-up and sign-in still work
 - [ ] Rate limits behave as expected
 - [ ] Stripe webhook replay is safe

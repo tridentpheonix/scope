@@ -31,6 +31,8 @@ Copy `.env.example` to `.env` and set the values you need:
 - `BLOB_READ_WRITE_TOKEN` for hosted attachment storage
 - `OBSERVABILITY_WEBHOOK_URL` for hosted diagnostics shipping
 - `OBSERVABILITY_WEBHOOK_SECRET` if your webhook expects a shared secret header
+- `ALERT_WEBHOOK_URL` for critical error notifications
+- `ALERT_WEBHOOK_SECRET` if your alert endpoint expects a shared secret header
 - AI provider credentials and model names
 
 ## Local and production health
@@ -72,6 +74,7 @@ pnpm dev
 - Client uploads are stored in Vercel Blob when configured; otherwise the app uses local filesystem fallback for development.
 - Saved deals and analytics are intentionally capped/aggregated so the common views stay fast.
 - Warning/error diagnostics can be shipped to an external webhook for hosted observability.
+- Error diagnostics can also be shipped to a dedicated alert webhook for incident notifications.
 - Authentication is first-party: password hashes and sessions are owned by the app rather than an external auth provider.
 - Auth sign-in/sign-up are rate-limited to slow down brute-force and abuse attempts.
 - Stripe webhook deliveries are deduplicated so replayed events do not double-apply billing state.
@@ -93,5 +96,6 @@ Before release, verify:
 - env vars are set in the target environment
 - attachment downloads work with your chosen storage backend
 - the observability webhook is reachable if you enable it
+- the alert webhook is reachable if you enable incident notifications
 
 See `docs/ops/production-hardening.md` for the production safety checklist, backup/restore drill, and operational limits.

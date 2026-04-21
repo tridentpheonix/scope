@@ -1,5 +1,6 @@
 import {
   isAuthConfigured,
+  isAlertingConfigured,
   isBlobStorageConfigured,
   isMongoConfigured,
   isObservabilityConfigured,
@@ -29,6 +30,9 @@ export type SystemHealthSnapshot = {
       configured: boolean;
     };
     observability: {
+      configured: boolean;
+    };
+    alerting: {
       configured: boolean;
     };
   };
@@ -85,6 +89,9 @@ export async function getSystemHealthSnapshot(options: SystemHealthOptions = {})
       },
       observability: {
         configured: isObservabilityConfigured(),
+      },
+      alerting: {
+        configured: isAlertingConfigured(),
       },
     },
   } satisfies SystemHealthSnapshot;

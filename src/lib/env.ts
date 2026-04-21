@@ -20,6 +20,8 @@ export const appEnv = {
   blobReadWriteToken: readEnv("BLOB_READ_WRITE_TOKEN"),
   observabilityWebhookUrl: readEnv("OBSERVABILITY_WEBHOOK_URL"),
   observabilityWebhookSecret: readEnv("OBSERVABILITY_WEBHOOK_SECRET"),
+  alertWebhookUrl: readEnv("ALERT_WEBHOOK_URL"),
+  alertWebhookSecret: readEnv("ALERT_WEBHOOK_SECRET"),
 };
 
 export function isMongoConfigured() {
@@ -43,6 +45,10 @@ export function isBlobStorageConfigured() {
 
 export function isObservabilityConfigured() {
   return Boolean(appEnv.observabilityWebhookUrl);
+}
+
+export function isAlertingConfigured() {
+  return Boolean(appEnv.alertWebhookUrl);
 }
 
 export function isStripeCheckoutConfigured() {
