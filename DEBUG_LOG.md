@@ -1,6 +1,13 @@
 # DEBUG LOG
 
 ## 2026-04-22
+- Added `src/lib/background-tasks.ts` plus a Vercel cron route and local processor so attachment cleanup can happen off the request path.
+- Wired deal deletion to enqueue background cleanup work instead of waiting for file/blob deletion inline.
+- Added `CRON_SECRET` handling, background-task health visibility, and Mongo TTL/index coverage for queued maintenance jobs.
+- Updated the production hardening docs and runbook for the background cleanup worker.
+- Verified the async slice with targeted Vitest, targeted ESLint, and a successful `pnpm build` after fixing the worker import/type issues.
+
+## 2026-04-22
 - Added `src/lib/alerting.ts` so error diagnostics can be shipped to a dedicated alert webhook.
 - Wired `src/lib/diagnostics.ts` to forward error diagnostics to the alert sink without breaking the request path.
 - Added `ALERT_WEBHOOK_URL` / `ALERT_WEBHOOK_SECRET` handling and documented the new env vars in the repo.

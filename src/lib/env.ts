@@ -22,6 +22,7 @@ export const appEnv = {
   observabilityWebhookSecret: readEnv("OBSERVABILITY_WEBHOOK_SECRET"),
   alertWebhookUrl: readEnv("ALERT_WEBHOOK_URL"),
   alertWebhookSecret: readEnv("ALERT_WEBHOOK_SECRET"),
+  cronSecret: readEnv("CRON_SECRET"),
 };
 
 export function isMongoConfigured() {
@@ -49,6 +50,10 @@ export function isObservabilityConfigured() {
 
 export function isAlertingConfigured() {
   return Boolean(appEnv.alertWebhookUrl);
+}
+
+export function isMaintenanceCronConfigured() {
+  return Boolean(appEnv.cronSecret);
 }
 
 export function isStripeCheckoutConfigured() {

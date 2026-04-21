@@ -101,6 +101,21 @@ const mongoIndexes: IndexSpec[] = [
     options: { expireAfterSeconds: 0, name: "stripe_webhook_events_expires_ttl" },
   },
   {
+    collection: "background_tasks",
+    index: { status: 1, runAfter: 1, createdAt: 1 },
+    options: { name: "background_tasks_pending_due" },
+  },
+  {
+    collection: "background_tasks",
+    index: { dedupeKey: 1 },
+    options: { unique: true, sparse: true, name: "background_tasks_dedupe_unique" },
+  },
+  {
+    collection: "background_tasks",
+    index: { expiresAt: 1 },
+    options: { expireAfterSeconds: 0, name: "background_tasks_expires_ttl" },
+  },
+  {
     collection: "risk_check_submissions",
     index: { workspaceId: 1, createdAt: -1 },
     options: { name: "risk_check_submissions_workspace_recent" },

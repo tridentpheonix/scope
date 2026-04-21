@@ -4,6 +4,7 @@ import {
   isBlobStorageConfigured,
   isMongoConfigured,
   isObservabilityConfigured,
+  isMaintenanceCronConfigured,
   isStripeConfigured,
 } from "./env";
 import { pingMongo } from "./mongo";
@@ -33,6 +34,9 @@ export type SystemHealthSnapshot = {
       configured: boolean;
     };
     alerting: {
+      configured: boolean;
+    };
+    maintenance: {
       configured: boolean;
     };
   };
@@ -92,6 +96,9 @@ export async function getSystemHealthSnapshot(options: SystemHealthOptions = {})
       },
       alerting: {
         configured: isAlertingConfigured(),
+      },
+      maintenance: {
+        configured: isMaintenanceCronConfigured(),
       },
     },
   } satisfies SystemHealthSnapshot;

@@ -14,6 +14,8 @@
 - **Observability and alerts**
   - warning/error diagnostics can be shipped to an observability webhook
   - error diagnostics can also be shipped to an alert webhook
+- **Background cleanup worker**
+  - deal attachment cleanup is queued and processed by a Vercel Cron job
 - **Stripe webhook dedupe**
   - duplicate deliveries are ignored safely
   - processed/failed webhook events are tracked in MongoDB
@@ -101,6 +103,7 @@ Expected behavior:
 - `200` when MongoDB is reachable and auth is configured
 - `503` when MongoDB is missing or unreachable
 - the health payload also reports whether observability and alerting webhooks are configured
+- the health payload also reports whether the maintenance cron secret is configured
 
 ### What to inspect if health is red
 
@@ -109,6 +112,7 @@ Expected behavior:
 3. Atlas cluster status
 4. Vercel deployment logs
 5. Alert webhook configuration if you expect failure notifications
+6. `CRON_SECRET` if you expect background cleanup jobs to run automatically
 
 ## Phase 4: Stripe webhook reliability
 
@@ -129,12 +133,32 @@ If a webhook needs to be reprocessed:
 3. Confirm the event transitions from `failed` to `processing` to `processed`.
 4. Verify the workspace billing state changed as expected.
 
-## Phase 5: Data lifecycle discipline
+## Phase 5: Background cleanup worker
+
+### What gets offloaded
+
+- attachment file/blob deletion after deal removal
+
+### How it works
+
+1. The API deletes the database records immediately.
+2. The attachment cleanup is written to `background_tasks`.
+3. Vercel Cron calls `/api/maintenance/background-tasks` every 5 minutes.
+4. The worker claims pending tasks, deletes the attachment, and marks the task succeeded.
+
+### If cleanup fails
+
+- The task is retried with backoff.
+- A failed cleanup job is logged as an error diagnostic.
+- Check the cron secret, task queue state, and attachment backend if failures repeat.
+
+## Phase 6: Data lifecycle discipline
 
 ### MongoDB collections with TTL cleanup
 
 - `auth_rate_limits`
 - `stripe_webhook_events`
+- `background_tasks`
 
 These collections are automatically pruned by MongoDB TTL indexes.
 
@@ -142,6 +166,7 @@ These collections are automatically pruned by MongoDB TTL indexes.
 
 - Rate-limit buckets: keep only for the active window
 - Webhook event history: keep enough for debugging, then expire automatically
+- Background tasks: keep successes/failures long enough to debug, then expire automatically
 
 ### Schema changes
 
@@ -158,6 +183,7 @@ Before shipping a production change:
 
 - [ ] Health endpoint returns `200`
 - [ ] Alert webhook is configured if you want critical error notifications
+- [ ] `CRON_SECRET` is configured if you want background cleanup to run automatically
 - [ ] Auth sign-up and sign-in still work
 - [ ] Rate limits behave as expected
 - [ ] Stripe webhook replay is safe

@@ -33,6 +33,7 @@ Copy `.env.example` to `.env` and set the values you need:
 - `OBSERVABILITY_WEBHOOK_SECRET` if your webhook expects a shared secret header
 - `ALERT_WEBHOOK_URL` for critical error notifications
 - `ALERT_WEBHOOK_SECRET` if your alert endpoint expects a shared secret header
+- `CRON_SECRET` for the Vercel cron worker that processes background tasks
 - AI provider credentials and model names
 
 ## Local and production health
@@ -56,6 +57,7 @@ pnpm dev
 - `pnpm db:bootstrap` ? verify MongoDB connectivity and ensure required indexes
 - `pnpm db:backup` ? export a JSON backup snapshot for staging drills
 - `pnpm db:restore` ? restore a backup snapshot into MongoDB
+- `pnpm maintenance:process-background-tasks` ? process queued cleanup jobs locally
 - `pnpm attachments:reconcile` ? find orphaned uploads/blobs and clean them up
 - `pnpm smoke:browser` ? run the browser smoke flow
 - `pnpm eval:ai` ? run the AI evaluation harness
@@ -75,6 +77,7 @@ pnpm dev
 - Saved deals and analytics are intentionally capped/aggregated so the common views stay fast.
 - Warning/error diagnostics can be shipped to an external webhook for hosted observability.
 - Error diagnostics can also be shipped to a dedicated alert webhook for incident notifications.
+- Attachment cleanup is queued and processed by a Vercel Cron worker so slow storage deletion does not block the request path.
 - Authentication is first-party: password hashes and sessions are owned by the app rather than an external auth provider.
 - Auth sign-in/sign-up are rate-limited to slow down brute-force and abuse attempts.
 - Stripe webhook deliveries are deduplicated so replayed events do not double-apply billing state.
@@ -97,5 +100,6 @@ Before release, verify:
 - attachment downloads work with your chosen storage backend
 - the observability webhook is reachable if you enable it
 - the alert webhook is reachable if you enable incident notifications
+- the cron secret is set if you want background cleanup jobs to run automatically in production
 
 See `docs/ops/production-hardening.md` for the production safety checklist, backup/restore drill, and operational limits.

@@ -15,6 +15,7 @@ That file covers:
 - auth rate limits
 - health checks
 - observability and alert webhooks
+- the background-task worker cron and `pnpm maintenance:process-background-tasks`
 - webhook dedupe
 - backup/restore drill steps
 - schema-change hygiene

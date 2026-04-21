@@ -2,29 +2,27 @@
 
 - **Project:** ScopeOS
 - **Baton Holder:** codex
-- **Current Goal:** Continue production hardening by deciding the next safety slice after alert webhook shipping: either incident visibility/runbook polish or async off-request-path handling.
-- **Current Branch / State:** scopeos-publish is a git repo on `main`; the auth rate limiting, health endpoint, Stripe webhook dedupe, backup/restore drill tooling, and alert webhook shipping are committed and pushed; the latest production deployment is live and healthy.
+- **Current Goal:** Finish the async/off-request-path hardening slice for background cleanup, then verify the live deployment and continue toward production-ready ops coverage.
+- **Current Branch / State:** scopeos-publish is a git repo on `main`; the auth rate limiting, health endpoint, Stripe webhook dedupe, backup/restore drill tooling, alert webhook shipping, and background-task worker slice are implemented locally but not yet committed in their final form.
 
 ## What Changed Since Last Handoff
-- Added `src/lib/alerting.ts` so error diagnostics can be shipped to a dedicated alert webhook.
-- Wired `src/lib/diagnostics.ts` to forward error diagnostics to the alert sink without affecting the request path.
-- Added `ALERT_WEBHOOK_URL` / `ALERT_WEBHOOK_SECRET` to env handling and documented them in `.env.example` and the operational docs.
-- Added `src/lib/alerting.test.ts` and `src/lib/diagnostics-alerting.test.ts` to verify alert payloads and integration behavior.
-- Added alerting visibility to the health snapshot and production hardening checklist.
-- Verified the new alerting slice with targeted Vitest, targeted ESLint, `pnpm build`, and live Vercel smoke checks.
+- Added `src/lib/background-tasks.ts` plus a Vercel cron route and local processor script so attachment cleanup can run off the request path.
+- Wired deal deletion to queue attachment cleanup work instead of waiting for file/blob deletion inline.
+- Added `CRON_SECRET` handling, background-task health visibility, and Mongo TTL/index coverage for the task queue.
+- Updated the production hardening docs and runbook to describe the new background cleanup worker.
+- Verified the async slice with targeted Vitest, targeted ESLint, and a successful `pnpm build` after fixing type issues.
 
 ## What?s Next
-- Decide whether the next slice should be incident visibility / operator dashboard polish or async off-request-path handling for slower side effects.
-- Continue to keep the backup helpers as local drill tooling unless a staged migration utility becomes necessary.
+- Commit and push the background-task worker slice, then verify the live deployment.
+- After that, decide whether the next slice should be incident visibility / operator dashboard polish or any remaining async reliability work.
 
 ## Blockers / Open Questions
 - Atlas-native backups still need to be confirmed in the real production account.
 - Backup helpers are local/staging drill tooling and not a substitute for managed provider snapshots.
 - Alerting is currently webhook-based and intentionally lightweight; there is still no paging/incident-management integration.
-- Slow/failure-prone background work is still mostly handled inline, so async offloading remains the next larger reliability gap.
+- The new background-task worker still needs live production verification after the next deploy.
 
 ## Commands Run + Results
-- Ran targeted Vitest for the hardening and observability tests successfully.
-- Ran targeted ESLint for the hardening modules, scripts, routes, and alerting helpers successfully.
-- Ran `pnpm build` successfully after adding the alerting slice.
-- Verified the latest Vercel production deployment and live `/api/health`, `/auth/sign-in`, and `/pricing` smoke checks successfully.
+- Ran targeted Vitest for the background-task, system-health, and deal-deletion tests successfully.
+- Ran targeted ESLint for the async slice modules, scripts, routes, and helpers successfully.
+- Ran `pnpm build` successfully after fixing the background-task worker type issues.

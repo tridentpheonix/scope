@@ -11,6 +11,7 @@ describe("system health", () => {
     vi.stubEnv("MONGODB_URI", "mongodb://127.0.0.1:27017");
     vi.stubEnv("MONGODB_DB_NAME", "scopeos");
     vi.stubEnv("ALERT_WEBHOOK_URL", "");
+    vi.stubEnv("CRON_SECRET", "");
 
     const { getSystemHealthSnapshot } = await import("./system-health");
     const snapshot = await getSystemHealthSnapshot({
@@ -34,6 +35,9 @@ describe("system health", () => {
         alerting: {
           configured: false,
         },
+        maintenance: {
+          configured: false,
+        },
       },
     });
     expect(snapshot.checks.mongo.latencyMs).not.toBeNull();
@@ -43,6 +47,7 @@ describe("system health", () => {
     vi.stubEnv("MONGODB_URI", "mongodb://127.0.0.1:27017");
     vi.stubEnv("MONGODB_DB_NAME", "scopeos");
     vi.stubEnv("ALERT_WEBHOOK_URL", "");
+    vi.stubEnv("CRON_SECRET", "");
 
     const { getSystemHealthSnapshot } = await import("./system-health");
     const snapshot = await getSystemHealthSnapshot({

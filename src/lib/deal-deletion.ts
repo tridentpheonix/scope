@@ -1,7 +1,9 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { isMongoConfigured } from "./env";
 import { deleteAttachment, normalizeSavedAttachment } from "./attachment-storage";
+import { recordDiagnostic } from "./diagnostics";
+import { isMongoConfigured } from "./env";
+import { queueAttachmentCleanupTask } from "./background-tasks";
 import { tryParseJson } from "./json-safe";
 import { readRiskCheckSubmissions } from "./risk-check-storage";
 import { ensureMongoIndexes, getMongoCollection } from "./mongo";
@@ -111,23 +113,25 @@ export async function deleteClientMaterial(
     await extractionReviews.deleteOne({ _id: submissionId, workspaceId });
     await changeOrders.deleteOne({ _id: submissionId, workspaceId });
 
-    await deleteAttachment(
-      normalizeSavedAttachment(submission.attachment) ??
-        (submission.attachmentContentBase64
-          ? {
-              originalName: "legacy-upload",
-              storedName: `${submissionId}-legacy-upload`,
-              mimeType: "application/octet-stream",
-              size: 0,
-              storageKind: "legacy-db",
-              storageRef: "stored-in-database",
-            }
-          : null),
-    );
+    const queuedCleanup = await queueAttachmentCleanupTask({
+      workspaceId,
+      submissionId,
+      attachment: normalizeSavedAttachment(submission.attachment),
+      baseDir,
+    });
+
+    if (!queuedCleanup.queued) {
+      void recordDiagnostic("info", "maintenance", "background_cleanup_not_queued", {
+        route: "/api/deals/[id]",
+        workspaceId,
+        submissionId,
+        message: "Attachment cleanup was not queued because no attachment cleanup was required.",
+      });
+    }
 
     return {
       ok: true,
-      message: "Client materials deleted for this deal.",
+      message: "Client materials deleted for this deal. Attachment cleanup is running in the background.",
     };
   }
 

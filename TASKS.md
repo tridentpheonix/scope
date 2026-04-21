@@ -21,20 +21,19 @@
    - operational runbook coverage
 
 ## NOW
-- the alert webhook shipping slice is committed and pushed.
-- next step: choose the next reliability slice after alerting.
+- finish the async/background-task slice by committing it and verifying the live deploy.
 
 ## NEXT
+- verify `/api/health` and the production app after the async/background-task deploy.
 - evaluate whether to ship incident visibility / operator dashboard polish next.
-- if the product needs it, start on async off-request-path handling for slower side effects.
 - keep the backup/restore drill workflow available for staging restores.
 
 ## LATER
 - [H19] create a one-time Neon -> Mongo migration utility if old production data must be preserved.
 - [H20] remove stale Neon terminology from remaining historical docs and helper names.
-- [H21] move slow, failure-prone work off the request path with queue/background-job handling.
-- [H22] add persistent incident visibility if webhook-based alerting proves too noisy or too thin.
-- [H23] confirm whether any Stripe/AI/background jobs should be moved to a durable worker model next.
+- [H21] add persistent incident visibility if webhook-based alerting proves too noisy or too thin.
+- [H22] confirm whether any Stripe/AI/background jobs should be moved to a durable worker model next.
+- [H23] consider a stronger restore/backup automation story once Atlas-native backups are confirmed.
 
 ## COMPLETED
 - [H18] installed local MongoDB Community Server, configured `.env` for `mongodb://127.0.0.1:27017`, and completed local bootstrap/build/smoke verification.
