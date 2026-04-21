@@ -17,17 +17,17 @@
    - auth rate limiting
    - MongoDB health/readiness route
    - Stripe webhook dedupe
-   - operational backup/restore runbook
+   - backup/restore drill workflow
+   - operational runbook coverage
 
 ## NOW
-- production hardening phase 1 is implemented in code and docs.
-- next step: mirror these changes into the deployable repo and verify the live app against Atlas/Vercel.
+- the backup/restore drill scripts are in place in the working tree.
+- next step: commit/push the drill slice and decide whether to add lightweight alerting next.
 
 ## NEXT
-- if hosting on Vercel matters now, confirm the production MongoDB instance is the one wired into `MONGODB_URI`.
-- verify `GET /api/health` in the deployed environment.
-- verify the sign-in/sign-up 429 path and Stripe webhook dedupe behavior in production.
-- optionally add backup/restore drill automation and alerting.
+- verify the drill scripts in a staging copy or local drill environment.
+- confirm Atlas native backup settings in production.
+- optionally add a minimal alerting/dashboard hook for the critical diagnostics path.
 
 ## LATER
 - [H19] create a one-time Neon -> Mongo migration utility if old production data must be preserved.

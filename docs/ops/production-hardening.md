@@ -49,6 +49,23 @@ Minimum workflow:
    - `/account`
 6. Record the restore result and timestamp.
 
+### Drill scripts
+
+ScopeOS also includes local JSON backup/restore helpers to make the drill repeatable:
+
+- `pnpm db:backup -- --base-dir backups --name staging-drill`
+- `pnpm db:restore -- --backup-dir backups/staging-drill --drop-existing`
+
+These scripts are intended for staging copies and restore drills, not as a replacement for Atlas native backups.
+
+Recommended drill flow:
+
+1. Export a known-good staging snapshot.
+2. Restore it into a fresh staging database.
+3. Point a staging deployment at the restored URI.
+4. Verify the critical flows again.
+5. Delete the temporary staging copy when the drill is complete.
+
 ## Phase 2: Abuse protection
 
 ### Auth rate limits
@@ -140,4 +157,3 @@ Before shipping a production change:
 - [ ] Stripe webhook replay is safe
 - [ ] Backup restore procedure has been exercised recently
 - [ ] Vercel env vars match the current Atlas cluster
-

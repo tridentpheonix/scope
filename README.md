@@ -52,6 +52,8 @@ pnpm dev
 - `pnpm build` ? production build
 - `pnpm db:migrate` ? verify MongoDB connectivity and ensure required indexes
 - `pnpm db:bootstrap` ? verify MongoDB connectivity and ensure required indexes
+- `pnpm db:backup` ? export a JSON backup snapshot for staging drills
+- `pnpm db:restore` ? restore a backup snapshot into MongoDB
 - `pnpm attachments:reconcile` ? find orphaned uploads/blobs and clean them up
 - `pnpm smoke:browser` ? run the browser smoke flow
 - `pnpm eval:ai` ? run the AI evaluation harness

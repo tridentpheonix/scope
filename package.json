@@ -10,6 +10,8 @@
     "test": "vitest run",
     "db:bootstrap": "tsx src/scripts/test-db.ts",
     "db:migrate": "tsx src/scripts/test-db.ts",
+    "db:backup": "tsx scripts/mongo-backup.ts",
+    "db:restore": "tsx scripts/mongo-restore.ts",
     "attachments:reconcile": "tsx scripts/reconcile-orphan-attachments.ts",
     "smoke:browser": "node scripts/browser-smoke.js",
     "eval:ai": "tsx scripts/ai-eval.ts"

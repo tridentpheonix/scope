@@ -17,6 +17,7 @@ That file covers:
 - webhook dedupe
 - backup/restore drill steps
 - schema-change hygiene
+- the `pnpm db:backup` and `pnpm db:restore` drill scripts
 
 ---
 

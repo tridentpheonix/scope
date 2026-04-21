@@ -1,5 +1,12 @@
 # DEBUG LOG
 
+## 2026-04-22
+- Added MongoDB backup/restore drill helpers in `src/lib/mongo-backup.ts` using BSON EJSON so date fields and other Mongo-native values round-trip correctly.
+- Added `scripts/mongo-backup.ts` and `scripts/mongo-restore.ts` for repeatable staging drills.
+- Added a shared local env loader in `src/scripts/load-local-env.ts` and reused it from `src/scripts/test-db.ts`.
+- Added a backup round-trip unit test for the EJSON helper.
+- Verified the new backup slice with targeted Vitest, targeted ESLint, and a successful `pnpm build` after fixing the restore typing issues.
+
 ## 2026-04-21
 - Added Mongo-backed auth rate limiting for sign-in/sign-up with IP and email buckets.
 - Added a MongoDB-backed health snapshot helper and `GET /api/health` readiness route.
@@ -8,7 +15,6 @@
 - Added unit tests for the new hardening helpers and verified them with targeted Vitest.
 - Ran targeted ESLint on the production-hardening routes and helpers successfully.
 - Ran `pnpm build` successfully with the new health route and hardening code included.
-- Re-ran targeted tests, targeted ESLint, and a final `pnpm build` after tightening the auth-rate-limit expiry guard.
 
 ## 2026-04-19
 - Pivoted ScopeOS away from Neon auth/Postgres runtime dependencies toward MongoDB plus first-party auth/session handling.
