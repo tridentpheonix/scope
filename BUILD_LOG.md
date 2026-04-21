@@ -54,8 +54,8 @@
 - Updated proposal-pack UI, analytics copy, and feedback form language to reflect branded export availability.
 - Added light/dark branded export theme toggle in the proposal pack editor with theme-aware HTML output.
 - Expanded branded export feedback capture with outcome + theme preference + next-step fields to inform further export work.
-- Added Neon environment helpers, schema bootstrap, and workspace billing records so ScopeOS can store authenticated workspace data in Neon Postgres.
-- Added Neon Auth server/client wiring with sign-in page, auth API route, protected middleware, and workspace/account-aware site navigation.
+- Added the initial environment helpers, schema bootstrap, and workspace billing records so ScopeOS could store authenticated workspace data in the legacy stack.
+- Added auth server/client wiring with sign-in page, auth API route, protected middleware, and workspace/account-aware site navigation.
 - Added public `/pricing` and protected `/account` pages plus a `.env.example` file so the auth + billing stack is setup-ready for local and hosted environments.
 - Added Stripe checkout, billing portal, and webhook handlers for Solo/Team subscriptions, including workspace plan updates from Stripe events.
 - Added paid-plan gating so free workspaces keep the core proposal flow while Solo/Team unlock saved deal history, branded export, and analytics.
@@ -66,14 +66,14 @@
 
 ## 2026-04-13
 - Created real Stripe test monthly prices for the Solo and Team plans, wired their IDs into the local environment, and corrected the local base URL to `http://localhost:3000` for checkout redirects.
-- Ran a full authenticated smoke test against the local app: Neon Auth sign-up produced a valid session cookie, `/api/billing/checkout` returned a live Stripe Checkout URL, and `/api/billing/portal` returned a live Stripe billing-portal URL.
+- Ran a full authenticated smoke test against the local app: sign-up produced a valid session cookie, `/api/billing/checkout` returned a live Stripe Checkout URL, and `/api/billing/portal` returned a live Stripe billing-portal URL.
 - Added webhook sync fallback logic so checkout-completed events can persist the plan from session metadata even when subscription expansion is unavailable.
-- Added the Stripe price ID to checkout and subscription metadata, then verified live webhook handling with signed test events: `customer.subscription.created` and `checkout.session.completed` both updated the workspace in Neon, including plan, status, subscription ID, and price ID.
-- Added the first AI-assisted extraction-review slice: a provider-agnostic structured-output helper, a Neon-backed AI run log table, an authenticated AI review API route, and a review-editor panel that can apply AI suggestions back into the draft.
+- Added the Stripe price ID to checkout and subscription metadata, then verified live webhook handling with signed test events: `customer.subscription.created` and `checkout.session.completed` both updated the workspace in the database, including plan, status, subscription ID, and price ID.
+- Added the first AI-assisted extraction-review slice: a provider-agnostic structured-output helper, a database-backed AI run log table, an authenticated AI review API route, and a review-editor panel that can apply AI suggestions back into the draft.
 - Added a focused test for the AI helper fallback and structured LLM path, then re-ran targeted lint, Vitest, and `pnpm build` after fixing an unrelated `src/scripts/test-db.ts` type-check issue.
-- Added the first AI-assisted proposal-pack slice: a structured rewrite helper for client-facing proposal blocks, a Neon-backed AI route/log path, and a proposal-pack editor panel with one-click apply behavior.
+- Added the first AI-assisted proposal-pack slice: a structured rewrite helper for client-facing proposal blocks, a database-backed AI route/log path, and a proposal-pack editor panel with one-click apply behavior.
 - Added a focused test for the proposal-pack AI fallback and structured LLM path, then re-ran targeted lint, Vitest, and `pnpm build` successfully.
-- Added reusable AI run history for both extraction-review and proposal-pack flows, plus a shared read route backed by Neon so the latest saved AI rewrite can be restored later.
+- Added reusable AI run history for both extraction-review and proposal-pack flows, plus a shared read route backed by the database so the latest saved AI rewrite can be restored later.
 - Re-ran targeted lint and `pnpm build` successfully after wiring the history panels into both editors.
 - Added NVIDIA API support by introducing NVIDIA-specific env vars, a shared provider resolver, and provider-resolution tests so ScopeOS can use `NVIDIA_API_KEY` / `NVIDIA_MODEL` without giving up the existing OpenAI-compatible fallback path.
 - Ran a live NVIDIA chat-completions smoke test against `integrate.api.nvidia.com/v1`; the API returned structured JSON in `reasoning_content`, so the shared AI parser now falls back to that field when `content` is empty.
@@ -82,8 +82,8 @@
 - Exposed the provider label in saved-run history cards too, so older AI generations keep the same explainability as the live result card.
 - Swapped raw provider slugs for product-friendly labels in the AI UI so results now read as NVIDIA/OpenAI/Fallback instead of `nvidia`/`openai`.
 - Added a 60-second timeout to the shared AI fetch path so live NVIDIA requests fail fast instead of hanging a browser smoke test indefinitely.
-- Replaced the old smoke-test bypass helper with a real Neon Auth sign-up/sign-in flow plus a dev-only local session cookie, keeping browser QA working without a hidden auth shortcut.
-- Added the Neon Auth handler route plus a local `/api/auth/session` helper so the browser smoke can create a real user session and revisit protected pages in development.
+- Replaced the old smoke-test bypass helper with a real sign-up/sign-in flow plus a dev-only local session cookie, keeping browser QA working without a hidden auth shortcut.
+- Added the auth handler route plus a local `/api/auth/session` helper so the browser smoke can create a real user session and revisit protected pages in development.
 - Re-ran the browser smoke successfully on the real-auth flow and confirmed the app reaches launchpad -> risk-check -> extraction-review -> proposal-pack -> launchpad without the bypass helper.
 - Verified the full browser smoke on `http://localhost:3001`: the extraction-review live result card showed `Provider: NVIDIA`, the saved history card showed `NVIDIA`, and the proposal-pack live result/history cards also showed `NVIDIA`.
 - Re-ran `pnpm build` successfully after the auth-session cleanup; the only remaining note is the existing Next.js dynamic cookies warning on `/risk-check`.

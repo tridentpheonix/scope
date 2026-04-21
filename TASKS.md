@@ -30,10 +30,10 @@
 - [H7] added an authenticated client-material download route plus a download button on saved deals so attachments can be retrieved after upload.
 - [H6] replaced the analytics dashboard full-history scan with aggregate summary reads and capped recent export-feedback events.
 - [H5] capped recent-history reads for saved deals and proposal memory so the common workspace views stop scanning the full history tables by default.
-- [H4] tightened client-material deletion so Neon and local retention cleanup also removes related analytics/export feedback records, with blob deletes now best-effort.
+- [H4] tightened client-material deletion so legacy-stack and local retention cleanup also removes related analytics/export feedback records, with blob deletes now best-effort.
 - [H3] moved client uploads out of Postgres into Vercel Blob when configured, with filesystem fallback and delete cleanup.
-- [H2] replaced hidden request-time schema bootstrapping with explicit Neon migrations and added `pnpm db:migrate`.
-- [H1] scrubbed `.env.example`, moved Neon schema setup out of request-time code, and added tenant ownership guards for workspace-scoped saves.
+- [H2] replaced hidden request-time schema bootstrapping with explicit migrations and added `pnpm db:migrate`.
+- [H1] scrubbed `.env.example`, moved schema setup out of request-time code, and added tenant ownership guards for workspace-scoped saves.
 - [H11] hardened the remaining malformed-file and malformed-request-body edge cases across the local storage readers and main API routes.
 - [H12] added DB-level tenant guardrails, orphan attachment reconciliation, and a webhook-backed observability sink for maintenance warnings/errors.
 - [H13] finished the final release-polish sweep with a README, cleaner ignore rules, and a passing production build.
@@ -43,7 +43,7 @@
 - [M4.3] finished the last billing / launch-checklist edge cases and verified the core launch flow.
 - [M4.1] removed the smoke-test bypass helper and replaced it with a real-auth dev smoke session flow.
 - [M4.2] added launch docs / handoff notes in `docs/launch-handoff.md` and tightened the launch checklist.
-- [M4.6] fixed the live auth-session mismatch by forcing authoritative Neon session reads and moving email sign-in/sign-up onto the official Neon auth client flow.
+- [M4.6] fixed the live auth-session mismatch by forcing authoritative session reads and moving email sign-in/sign-up onto the official auth client flow.
 - [M1.1] built a signed-in workspace launchpad on the home page with next-best-action guidance, recent-deal shortcuts, and a clearer first-run path.
 - [M1.2] tightened the first-run empty states across saved deals so new users always get a concrete next step.
 - [M2.1] added browser smoke coverage for the launchpad and the end-to-end brief -> review -> proposal path.
@@ -72,12 +72,12 @@
 - [S23] added deletion controls for sensitive client material at both intake and proposal levels.
 - [S9] created niche-specific clause packs with one-click apply in the proposal pack editor.
 - [S20] shipped branded export (HTML + print-to-PDF) in the proposal pack editor.
-- [S24] added Neon Auth sign-in, workspace account management, and account-aware navigation.
-- [S25] migrated app persistence to Neon Postgres with workspace-scoped storage for all deal data and analytics.
+- [S24] added first-party auth sign-in, workspace account management, and account-aware navigation.
+- [S25] migrated app persistence to the database stack with workspace-scoped storage for all deal data and analytics.
 - [S26] implemented Stripe subscription checkout, billing portal, and pricing/account control surfaces.
 - [S27] added plan-gating UI patterns for saved history, analytics, and branded export features.
 - [S28] wired real Stripe test price IDs into local env and verified authenticated checkout + billing portal smoke tests.
-- [S29] fixed webhook billing sync so subscription-created and checkout-completed events persist paid plan, status, and Stripe IDs in Neon.
+- [S29] fixed webhook billing sync so subscription-created and checkout-completed events persist paid plan, status, and Stripe IDs in the database.
 - [S30] shipped the first AI-assisted extraction review pass with deterministic fallback, optional LLM generation, and a one-click apply flow in the review editor.
 - [S31] shipped the first AI-assisted proposal-pack rewrite with deterministic fallback, structured LLM generation, and a one-click apply flow in the proposal editor.
 - [S32] added reusable AI run history for extraction-review and proposal-pack flows so the last saved rewrite can be restored after refresh or later review.
