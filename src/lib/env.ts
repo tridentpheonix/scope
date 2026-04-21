@@ -30,15 +30,6 @@ export function isAuthConfigured() {
   return isMongoConfigured();
 }
 
-// Temporary compatibility aliases while the storage layer finishes moving off the old naming.
-export function isNeonConfigured() {
-  return isMongoConfigured();
-}
-
-export function isNeonAuthConfigured() {
-  return isAuthConfigured();
-}
-
 export function isAiConfigured() {
   return Boolean(
     (appEnv.nvidiaApiKey || appEnv.aiApiKey) &&

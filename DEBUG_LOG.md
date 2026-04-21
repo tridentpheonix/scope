@@ -57,4 +57,5 @@
 - Synced the repo's MongoDB smoke script with the local workspace fix so it loads `.env` and closes the Mongo connection cleanly after the check.
 - Added a `closeMongoConnection()` helper to the Mongo client wrapper so one-off scripts can exit cleanly after bootstrapping indexes.
 - Updated the project memory files to reflect the MongoDB cutover goal and the current push/verification step.
+- Renamed the runtime storage compatibility helpers to Mongo-neutral names, removed the dead Neon migration shim file, and confirmed the source tree no longer contains Neon-era helper names.
 

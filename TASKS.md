@@ -9,7 +9,7 @@
    - push `main` to GitHub
 3. **Follow-up hardening**
    - rotate the exposed MongoDB user password
-   - remove legacy Neon references only if they still affect runtime
+   - trim legacy Neon references in historical docs only if they still cause confusion
 
 ## NOW
 - verify the live Vercel deployment after the Mongo env vars and repo cleanup are in place.
@@ -21,7 +21,7 @@
 
 ## LATER
 - remove legacy Neon env references from docs only if they keep causing confusion.
-- consider trimming old migration/compatibility code only after the Mongo deployment is stable.
+- consider trimming historical Neon notes only after the Mongo deployment is stable.
 
 ## COMPLETED
 - [H10] polished the signed-in workspace launchpad cards to show attachment state and a direct client-material download action.

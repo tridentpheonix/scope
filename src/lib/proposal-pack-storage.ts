@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { isNeonConfigured } from "./env";
+import { isMongoConfigured } from "./env";
 import { isPlainObject, tryParseJson } from "./json-safe";
 import { assertWorkspaceOwnership } from "./workspace-scope";
 import { ensureMongoIndexes, getMongoCollection } from "./mongo";
@@ -26,8 +26,8 @@ type ProposalPackDocument = {
 
 const defaultDataDir = path.join(process.cwd(), "data");
 
-function shouldUseNeon(baseDir?: string) {
-  return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
+function shouldUseMongo(baseDir?: string) {
+  return isMongoConfigured() && (!baseDir || baseDir === defaultDataDir);
 }
 
 async function ensureProposalPackDir(baseDir: string) {
@@ -45,7 +45,7 @@ export async function readProposalPackRecord(
   baseDir = defaultDataDir,
   workspaceId?: string,
 ) {
-  if (shouldUseNeon(baseDir)) {
+  if (shouldUseMongo(baseDir)) {
     if (!workspaceId) {
       return null;
     }
@@ -99,7 +99,7 @@ export async function readProposalPackRecords(
   workspaceId?: string,
   limit?: number,
 ) {
-  if (shouldUseNeon(baseDir)) {
+  if (shouldUseMongo(baseDir)) {
     if (!workspaceId) {
       return [] satisfies SavedProposalPackRecord[];
     }
@@ -167,7 +167,7 @@ export async function saveProposalPackRecord(
   clientBlocks: Record<string, string>,
   options: SaveProposalPackOptions = {},
 ) {
-  if (shouldUseNeon(options.baseDir)) {
+  if (shouldUseMongo(options.baseDir)) {
     const workspaceId = options.workspaceId;
     if (!workspaceId) {
       throw new Error("workspaceId is required for Mongo-backed proposal pack storage.");

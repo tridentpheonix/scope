@@ -1,7 +1,7 @@
 import { del, list } from "@vercel/blob";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { appEnv, isBlobStorageConfigured, isNeonConfigured } from "./env";
+import { appEnv, isBlobStorageConfigured } from "./env";
 import { normalizeSavedAttachment, type SavedAttachment } from "./attachment-storage";
 import { recordDiagnostic } from "./diagnostics";
 import { readRiskCheckSubmissions } from "./risk-check-storage";
@@ -30,10 +30,6 @@ export type AttachmentReconciliationOptions = {
   dryRun?: boolean;
   blobPrefix?: string;
 };
-
-function shouldUseNeon(baseDir?: string) {
-  return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
-}
 
 function collectAttachmentRefs(attachments: Array<SavedAttachment | null>) {
   const refs: AttachmentRef[] = [];
@@ -65,10 +61,7 @@ function collectAttachmentRefs(attachments: Array<SavedAttachment | null>) {
 }
 
 async function readAllReferencedAttachments(baseDir: string, workspaceId?: string) {
-  const submissions = await readRiskCheckSubmissions(
-    baseDir,
-    shouldUseNeon(baseDir) ? workspaceId : workspaceId,
-  );
+  const submissions = await readRiskCheckSubmissions(baseDir, workspaceId);
   return collectAttachmentRefs(submissions.map((submission) => normalizeSavedAttachment(submission.attachment)));
 }
 

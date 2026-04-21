@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { isNeonConfigured } from "./env";
+import { isMongoConfigured } from "./env";
 import { tryParseJson } from "./json-safe";
 import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
@@ -58,8 +58,8 @@ type PilotFeedbackDocument = {
 
 const defaultDataDir = path.join(process.cwd(), "data");
 
-function shouldUseNeon(baseDir?: string) {
-  return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
+function shouldUseMongo(baseDir?: string) {
+  return isMongoConfigured() && (!baseDir || baseDir === defaultDataDir);
 }
 
 function normalizeEntry(value: unknown): PilotFeedbackEntry | null {
@@ -145,7 +145,7 @@ export async function readPilotFeedbackEntries(
   workspaceId?: string,
   limit = 20,
 ) {
-  if (shouldUseNeon(baseDir)) {
+  if (shouldUseMongo(baseDir)) {
     if (!workspaceId) {
       return [] satisfies PilotFeedbackEntry[];
     }
@@ -217,7 +217,7 @@ export async function savePilotFeedbackEntry(
 ) {
   const workspaceId = options.workspaceId ?? entry.workspaceId;
 
-  if (shouldUseNeon(options.baseDir)) {
+  if (shouldUseMongo(options.baseDir)) {
     if (!workspaceId) {
       throw new Error("workspaceId is required for Mongo-backed pilot feedback storage.");
     }

@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { isNeonConfigured } from "./env";
+import { isMongoConfigured } from "./env";
 import { isPlainObject, tryParseJson } from "./json-safe";
 import type { AnalyticsEvent } from "./analytics";
 import { readExportBlockerSignals, type ExportBlockerSignal } from "./export-blocker-storage";
@@ -17,12 +17,12 @@ type AnalyticsEventDocument = {
   metadata?: Record<string, string | number | boolean | null>;
 };
 
-function shouldUseNeon(baseDir?: string) {
-  return isNeonConfigured() && (!baseDir || baseDir === defaultDataDir);
+function shouldUseMongo(baseDir?: string) {
+  return isMongoConfigured() && (!baseDir || baseDir === defaultDataDir);
 }
 
 export async function readAnalyticsEvents(baseDir = defaultDataDir, workspaceId?: string) {
-  if (shouldUseNeon(baseDir)) {
+  if (shouldUseMongo(baseDir)) {
     if (!workspaceId) {
       return [] satisfies AnalyticsEvent[];
     }
@@ -79,7 +79,7 @@ export async function saveAnalyticsEvent(
     workspaceId?: string;
   } = {},
 ) {
-  if (shouldUseNeon(options.baseDir)) {
+  if (shouldUseMongo(options.baseDir)) {
     if (!options.workspaceId) {
       throw new Error("workspaceId is required for Mongo-backed analytics storage.");
     }
@@ -143,7 +143,7 @@ export async function readAnalyticsDashboard(
   recentEventLimit = 25,
   recentBlockerLimit = 5,
 ) {
-  if (shouldUseNeon(baseDir)) {
+  if (shouldUseMongo(baseDir)) {
     if (!workspaceId) {
       return {
         summary: {

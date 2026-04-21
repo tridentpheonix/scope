@@ -65,7 +65,7 @@ export function normalizeSavedAttachment(value: unknown): SavedAttachment | null
       : typeof attachment.url === "string"
         ? "blob"
         : typeof attachment.relativePath === "string"
-          ? attachment.relativePath === "stored-in-neon"
+          ? attachment.relativePath === "stored-in-database"
             ? "legacy-db"
             : "filesystem"
           : "legacy-db";
