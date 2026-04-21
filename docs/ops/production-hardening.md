@@ -143,8 +143,10 @@ If a webhook needs to be reprocessed:
 
 1. The API deletes the database records immediately.
 2. The attachment cleanup is written to `background_tasks`.
-3. Vercel Cron calls `/api/maintenance/background-tasks` every 5 minutes.
+3. Vercel Cron calls `/api/maintenance/background-tasks` once per day on Hobby plans.
 4. The worker claims pending tasks, deletes the attachment, and marks the task succeeded.
+
+If you upgrade to a Vercel Pro plan later, you can tighten the cron cadence by updating `vercel.json`.
 
 ### If cleanup fails
 
