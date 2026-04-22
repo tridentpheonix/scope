@@ -17,9 +17,11 @@ export default function RiskCheckPage() {
 
       <section className="section-shell grid gap-10 py-12 md:grid-cols-[0.75fr_1.25fr] md:py-[4.5rem]">
         <div className="grid gap-6">
-          <div className="status-chip w-fit border-sky-400/30 bg-sky-400/10 text-slate-900">
+          <div className="status-chip w-fit border-sky-500/35 bg-white/85 text-slate-950 shadow-sm backdrop-blur-sm">
             <span className="size-2 rounded-full bg-sky-500" />
-            Early concierge intake
+            <span className="font-semibold tracking-[0.01em] text-slate-950">
+              Early concierge intake
+            </span>
           </div>
 
           <div className="grid gap-4">
