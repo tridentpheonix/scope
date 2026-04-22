@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentWorkspaceContext } from "@/lib/auth/server";
 import { getIncidentVisibilitySnapshot } from "@/lib/incident-visibility";
+import { getCurrentOperatorContext } from "@/lib/operator-access";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ function statusDot(ok: boolean) {
 }
 
 export default async function OpsPage() {
-  const authContext = await getCurrentWorkspaceContext();
+  const authContext = await getCurrentOperatorContext();
   const snapshot = await getIncidentVisibilitySnapshot({ recentLimit: 8 });
   const { health, recentDiagnostics } = snapshot;
 
@@ -81,6 +81,7 @@ export default async function OpsPage() {
                 ["Maintenance", health.checks.maintenance.configured, health.checks.maintenance.configured ? "Cron secret configured" : "Cron secret missing"],
                 ["Observability", health.checks.observability.configured, health.checks.observability.configured ? "Webhook configured" : "Not configured"],
                 ["Alerting", health.checks.alerting.configured, health.checks.alerting.configured ? "Critical alerts enabled" : "Not configured"],
+                ["Operator access", health.checks.operatorAccess.configured, health.checks.operatorAccess.configured ? "Allowlist configured" : "No allowlist configured"],
               ].map(([label, ok, note]) => (
                 <div key={String(label)} className={`rounded-[1.5rem] border px-4 py-4 ${statusTone(Boolean(ok))}`}>
                   <div className="text-xs font-semibold uppercase tracking-[0.16em] opacity-80">

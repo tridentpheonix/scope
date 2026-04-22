@@ -4,15 +4,23 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
 import { getPlanLabel, isPaidPlan } from "@/lib/billing-gates";
+import { canAccessOpsDashboard } from "@/lib/operator-access";
 import { canUseStripeBilling } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
-export default async function AccountPage() {
+type AccountPageProps = {
+  searchParams?: {
+    ops?: string;
+  };
+};
+
+export default async function AccountPage({ searchParams }: AccountPageProps) {
   const authContext = await getCurrentWorkspaceContext();
   const workspace = authContext.workspace;
   const currentPlan = getPlanLabel(workspace?.planKey);
   const isPaid = isPaidPlan(workspace?.planKey);
+  const opsDenied = searchParams?.ops === "denied";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">
@@ -38,6 +46,13 @@ export default async function AccountPage() {
             </p>
           </div>
         </div>
+
+        {opsDenied ? (
+          <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-7 text-amber-950">
+            <strong className="block text-base">Ops dashboard access denied.</strong>
+            This account is signed in, but it is not on the operator allowlist for /ops.
+          </div>
+        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="grid gap-5 rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm md:px-8">
@@ -137,12 +152,11 @@ export default async function AccountPage() {
                   >
                     Pilot feedback
                   </Link>
-                  <Link
-                    href="/ops"
-                    className="btn btn-outline"
-                  >
-                    Ops dashboard
-                  </Link>
+                  {canAccessOpsDashboard(authContext.user.email) ? (
+                    <Link href="/ops" className="btn btn-outline">
+                      Ops dashboard
+                    </Link>
+                  ) : null}
                 </div>
               </div>
             </div>

@@ -3,6 +3,7 @@ import {
   isAlertingConfigured,
   isBlobStorageConfigured,
   isMongoConfigured,
+  isOpsAccessConfigured,
   isObservabilityConfigured,
   isMaintenanceCronConfigured,
   isStripeConfigured,
@@ -34,6 +35,9 @@ export type SystemHealthSnapshot = {
       configured: boolean;
     };
     alerting: {
+      configured: boolean;
+    };
+    operatorAccess: {
       configured: boolean;
     };
     maintenance: {
@@ -96,6 +100,9 @@ export async function getSystemHealthSnapshot(options: SystemHealthOptions = {})
       },
       alerting: {
         configured: isAlertingConfigured(),
+      },
+      operatorAccess: {
+        configured: isOpsAccessConfigured(),
       },
       maintenance: {
         configured: isMaintenanceCronConfigured(),

@@ -23,6 +23,7 @@ export const appEnv = {
   alertWebhookUrl: readEnv("ALERT_WEBHOOK_URL"),
   alertWebhookSecret: readEnv("ALERT_WEBHOOK_SECRET"),
   cronSecret: readEnv("CRON_SECRET"),
+  opsOperatorEmails: readEnv("OPS_OPERATOR_EMAILS"),
 };
 
 export function isMongoConfigured() {
@@ -54,6 +55,21 @@ export function isAlertingConfigured() {
 
 export function isMaintenanceCronConfigured() {
   return Boolean(appEnv.cronSecret);
+}
+
+export function getOpsOperatorEmails() {
+  return (appEnv.opsOperatorEmails ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isOpsOperatorEmail(email: string) {
+  return getOpsOperatorEmails().includes(email.trim().toLowerCase());
+}
+
+export function isOpsAccessConfigured() {
+  return getOpsOperatorEmails().length > 0;
 }
 
 export function isStripeCheckoutConfigured() {

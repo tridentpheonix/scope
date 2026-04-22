@@ -16,6 +16,7 @@
   - error diagnostics can also be shipped to an alert webhook
 - **Incident visibility dashboard**
   - `/ops` shows the current health snapshot plus recent warnings and errors
+  - access is controlled by the `OPS_OPERATOR_EMAILS` allowlist
 - **Background cleanup worker**
   - deal attachment cleanup is queued and processed by a Vercel Cron job
 - **Stripe webhook dedupe**
@@ -204,6 +205,7 @@ Before shipping a production change:
 - [ ] Health endpoint returns `200`
 - [ ] Alert webhook is configured if you want critical error notifications
 - [ ] `CRON_SECRET` is configured if you want background cleanup to run automatically
+- [ ] `OPS_OPERATOR_EMAILS` is configured if you want the `/ops` dashboard to be operator-only
 - [ ] Auth sign-up and sign-in still work
 - [ ] Rate limits behave as expected
 - [ ] Stripe webhook replay is safe

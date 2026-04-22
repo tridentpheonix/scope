@@ -12,6 +12,7 @@ describe("system health", () => {
     vi.stubEnv("MONGODB_DB_NAME", "scopeos");
     vi.stubEnv("ALERT_WEBHOOK_URL", "");
     vi.stubEnv("CRON_SECRET", "");
+    vi.stubEnv("OPS_OPERATOR_EMAILS", "owner@example.com");
 
     const { getSystemHealthSnapshot } = await import("./system-health");
     const snapshot = await getSystemHealthSnapshot({
@@ -35,6 +36,9 @@ describe("system health", () => {
         alerting: {
           configured: false,
         },
+        operatorAccess: {
+          configured: true,
+        },
         maintenance: {
           configured: false,
         },
@@ -48,6 +52,7 @@ describe("system health", () => {
     vi.stubEnv("MONGODB_DB_NAME", "scopeos");
     vi.stubEnv("ALERT_WEBHOOK_URL", "");
     vi.stubEnv("CRON_SECRET", "");
+    vi.stubEnv("OPS_OPERATOR_EMAILS", "owner@example.com");
 
     const { getSystemHealthSnapshot } = await import("./system-health");
     const snapshot = await getSystemHealthSnapshot({
