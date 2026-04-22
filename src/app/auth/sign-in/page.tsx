@@ -5,8 +5,15 @@ import { isAuthConfigured } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
-export default async function SignInPage() {
+type SignInPageProps = {
+  searchParams?: {
+    password?: string;
+  };
+};
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
   const user = await getCurrentUser();
+  const passwordChanged = searchParams?.password === "changed";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">
@@ -27,6 +34,13 @@ export default async function SignInPage() {
                 Open account
               </a>
             </div>
+          </div>
+        ) : passwordChanged ? (
+          <div className="rounded-[2rem] border border-emerald-200 bg-emerald-50 p-6 text-sm leading-7 text-emerald-950 shadow-sm md:p-8">
+            <strong className="block text-base">Password changed successfully.</strong>
+            <p className="m-0 mt-2">
+              Your old sessions were signed out. Please sign in again with your new password.
+            </p>
           </div>
         ) : isAuthConfigured() ? (
           <AuthPanel />

@@ -42,6 +42,7 @@ Copy `.env.example` to `.env` and set the values you need:
 
 - `GET /api/health` returns the MongoDB/auth readiness snapshot.
 - `GET /ops` provides an operator-facing incident visibility dashboard for signed-in users.
+- The account page includes password-change and sign-out controls for session hygiene.
 - `docs/ops/production-hardening.md` contains the backup/restore drill and production operational checklist.
 
 ### Run locally

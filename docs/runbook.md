@@ -13,6 +13,7 @@ For the live MongoDB + first-party-auth stack, see:
 That file covers:
 
 - auth rate limits
+- account password changes and session revocation
 - health checks
 - the operator allowlist for `/ops`
 - the `/ops` incident visibility dashboard

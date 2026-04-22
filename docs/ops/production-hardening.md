@@ -25,6 +25,9 @@
 - **TTL-backed cleanup**
   - rate-limit buckets expire automatically
   - webhook event history expires automatically
+- **Account security**
+  - password changes invalidate every active session
+  - the sign-in page shows a success message after a password reset/change
 
 ## Phase 1: Data safety baseline
 
@@ -212,6 +215,7 @@ Before shipping a production change:
 - [ ] Alert webhook is configured if you want critical error notifications
 - [ ] `CRON_SECRET` is configured if you want background cleanup to run automatically
 - [ ] `OPS_OPERATOR_EMAILS` is configured if you want the `/ops` dashboard to be operator-only
+- [ ] Account page password-change flow works and revokes all sessions
 - [ ] Auth sign-up and sign-in still work
 - [ ] Rate limits behave as expected
 - [ ] Stripe webhook replay is safe

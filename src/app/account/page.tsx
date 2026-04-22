@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BillingActions } from "@/components/billing-actions";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteHeader } from "@/components/site-header";
+import { PasswordChangeForm } from "@/components/password-change-form";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
 import { getPlanLabel, isPaidPlan } from "@/lib/billing-gates";
 import { canAccessOpsDashboard } from "@/lib/operator-access";
@@ -169,6 +170,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                 <p className="m-0 text-sm leading-7 text-slate-700">
                   Signed in as <strong>{authContext.user.email}</strong>.
                 </p>
+                <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 px-4 py-4">
+                  <div className="mb-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Change password
+                  </div>
+                  <PasswordChangeForm />
+                </div>
                 <SignOutButton />
               </div>
             </div>

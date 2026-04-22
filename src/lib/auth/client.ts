@@ -94,4 +94,20 @@ export const authClient = {
     const result = await request<{ ok: true }>("/api/auth/sign-out", {}, fetchOptions);
     return result.data ?? result;
   },
+  changePassword: async ({
+    currentPassword,
+    newPassword,
+    fetchOptions,
+  }: {
+    currentPassword: string;
+    newPassword: string;
+    fetchOptions?: ClientFetchOptions;
+  }) => {
+    const result = await request<{ ok: true; message: string }>(
+      "/api/auth/change-password",
+      { currentPassword, newPassword },
+      fetchOptions,
+    );
+    return result.data ?? result;
+  },
 };

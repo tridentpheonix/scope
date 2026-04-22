@@ -99,6 +99,51 @@ export async function attachSessionCookie(response: NextResponse, userId: string
   });
 }
 
+export async function revokeAllSessionsForUser(userId: string) {
+  await ensureMongoIndexes();
+
+  const sessions = await getMongoCollection<SessionDocument>("sessions");
+  await sessions.deleteMany({ userId });
+}
+
+export async function changePasswordForUser(options: {
+  userId: string;
+  currentPassword: string;
+  newPassword: string;
+}) {
+  await ensureMongoIndexes();
+
+  const users = await getMongoCollection<AuthUserRecord>("users");
+  const user = await users.findOne({ _id: options.userId });
+
+  if (!user || !verifyPassword(options.currentPassword, user.passwordHash)) {
+    throw new Error("invalid_current_password");
+  }
+
+  const nextPasswordHash = hashPassword(options.newPassword);
+  const now = new Date().toISOString();
+
+  await users.updateOne(
+    { _id: options.userId },
+    {
+      $set: {
+        passwordHash: nextPasswordHash,
+        updatedAt: now,
+      },
+    },
+  );
+
+  await revokeAllSessionsForUser(options.userId);
+
+  return {
+    user: {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+    },
+  };
+}
+
 export async function revokeSessionFromRequest() {
   await ensureMongoIndexes();
 
