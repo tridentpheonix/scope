@@ -6,14 +6,19 @@ import { isAuthConfigured } from "@/lib/env";
 export const dynamic = "force-dynamic";
 
 type SignInPageProps = {
-  searchParams?: {
-    password?: string;
-  };
+  searchParams?:
+    | {
+        password?: string;
+      }
+    | Promise<{
+        password?: string;
+      }>;
 };
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const user = await getCurrentUser();
-  const passwordChanged = searchParams?.password === "changed";
+  const resolvedSearchParams = await searchParams;
+  const passwordChanged = resolvedSearchParams?.password === "changed";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">

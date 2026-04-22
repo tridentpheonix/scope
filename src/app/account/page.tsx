@@ -11,9 +11,13 @@ import { canUseStripeBilling } from "@/lib/stripe";
 export const dynamic = "force-dynamic";
 
 type AccountPageProps = {
-  searchParams?: {
-    ops?: string;
-  };
+  searchParams?:
+    | {
+        ops?: string;
+      }
+    | Promise<{
+        ops?: string;
+      }>;
 };
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
@@ -21,7 +25,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const workspace = authContext.workspace;
   const currentPlan = getPlanLabel(workspace?.planKey);
   const isPaid = isPaidPlan(workspace?.planKey);
-  const opsDenied = searchParams?.ops === "denied";
+  const resolvedSearchParams = await searchParams;
+  const opsDenied = resolvedSearchParams?.ops === "denied";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">
