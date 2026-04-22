@@ -39,6 +39,7 @@ Copy `.env.example` to `.env` and set the values you need:
 ## Local and production health
 
 - `GET /api/health` returns the MongoDB/auth readiness snapshot.
+- `GET /ops` provides an operator-facing incident visibility dashboard for signed-in users.
 - `docs/ops/production-hardening.md` contains the backup/restore drill and production operational checklist.
 
 ### Run locally

@@ -21,19 +21,19 @@
    - operational runbook coverage
 
 ## NOW
-- finish the async/background-task slice by committing it and verifying the live deploy.
+- finish the incident-visibility dashboard slice by committing it and verifying the live deploy.
 
 ## NEXT
-- verify `/api/health` and the production app after the async/background-task deploy.
-- evaluate whether to ship incident visibility / operator dashboard polish next.
+- verify `/ops`, `/api/health`, and the production app after the incident-visibility deploy.
+- decide whether to deepen alerting or keep tightening operator workflows.
 - keep the backup/restore drill workflow available for staging restores.
 
 ## LATER
 - [H19] create a one-time Neon -> Mongo migration utility if old production data must be preserved.
 - [H20] remove stale Neon terminology from remaining historical docs and helper names.
-- [H21] add persistent incident visibility if webhook-based alerting proves too noisy or too thin.
-- [H22] confirm whether any Stripe/AI/background jobs should be moved to a durable worker model next.
-- [H23] consider a stronger restore/backup automation story once Atlas-native backups are confirmed.
+- [H21] confirm whether any Stripe/AI/background jobs should be moved to a durable worker model next.
+- [H22] consider a stronger restore/backup automation story once Atlas-native backups are confirmed.
+- [H23] decide whether to expand the diagnostic mirror into a longer-lived incident archive.
 
 ## COMPLETED
 - [H18] installed local MongoDB Community Server, configured `.env` for `mongodb://127.0.0.1:27017`, and completed local bootstrap/build/smoke verification.

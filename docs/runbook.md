@@ -14,6 +14,7 @@ That file covers:
 
 - auth rate limits
 - health checks
+- the `/ops` incident visibility dashboard
 - observability and alert webhooks
 - the background-task worker cron and `pnpm maintenance:process-background-tasks`
 - webhook dedupe

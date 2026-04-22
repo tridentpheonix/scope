@@ -14,6 +14,8 @@
 - **Observability and alerts**
   - warning/error diagnostics can be shipped to an observability webhook
   - error diagnostics can also be shipped to an alert webhook
+- **Incident visibility dashboard**
+  - `/ops` shows the current health snapshot plus recent warnings and errors
 - **Background cleanup worker**
   - deal attachment cleanup is queued and processed by a Vercel Cron job
 - **Stripe webhook dedupe**
@@ -132,6 +134,22 @@ If a webhook needs to be reprocessed:
 2. Re-send the Stripe event from the Stripe dashboard or CLI.
 3. Confirm the event transitions from `failed` to `processing` to `processed`.
 4. Verify the workspace billing state changed as expected.
+
+## Incident visibility dashboard
+
+### What `/ops` shows
+
+- current Mongo/auth/Stripe/cron/observability readiness
+- recent warnings and errors mirrored into MongoDB
+- operator links back to the health JSON and account surface
+
+### How to use it
+
+1. Sign in with an operator account.
+2. Open `/ops`.
+3. Check the overall status card first.
+4. Read the most recent warnings or errors.
+5. Open `/api/health` if you want the raw JSON snapshot.
 
 ## Phase 5: Background cleanup worker
 

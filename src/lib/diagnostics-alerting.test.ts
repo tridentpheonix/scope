@@ -7,8 +7,13 @@ vi.mock("./alerting", () => ({
   shipDiagnosticToAlertWebhook: vi.fn().mockResolvedValue({ shipped: false }),
 }));
 
+vi.mock("./incident-visibility", () => ({
+  mirrorDiagnosticEvent: vi.fn().mockResolvedValue({ stored: false }),
+}));
+
 import { recordDiagnostic } from "./diagnostics";
 import { shipDiagnosticToAlertWebhook } from "./alerting";
+import { mirrorDiagnosticEvent } from "./incident-visibility";
 
 let tempDir: string | null = null;
 
@@ -38,6 +43,7 @@ describe("diagnostics alerting integration", () => {
     });
 
     expect(shipDiagnosticToAlertWebhook).toHaveBeenCalledTimes(1);
+    expect(mirrorDiagnosticEvent).toHaveBeenCalledTimes(1);
     expect(shipDiagnosticToAlertWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
         level: "error",
@@ -58,5 +64,6 @@ describe("diagnostics alerting integration", () => {
     });
 
     expect(shipDiagnosticToAlertWebhook).toHaveBeenCalled();
+    expect(mirrorDiagnosticEvent).toHaveBeenCalled();
   });
 });

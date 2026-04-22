@@ -116,6 +116,16 @@ const mongoIndexes: IndexSpec[] = [
     options: { expireAfterSeconds: 0, name: "background_tasks_expires_ttl" },
   },
   {
+    collection: "diagnostic_events",
+    index: { level: 1, createdAt: -1 },
+    options: { name: "diagnostic_events_level_recent" },
+  },
+  {
+    collection: "diagnostic_events",
+    index: { expiresAt: 1 },
+    options: { expireAfterSeconds: 0, name: "diagnostic_events_expires_ttl" },
+  },
+  {
     collection: "risk_check_submissions",
     index: { workspaceId: 1, createdAt: -1 },
     options: { name: "risk_check_submissions_workspace_recent" },

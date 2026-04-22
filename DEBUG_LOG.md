@@ -1,6 +1,13 @@
 # DEBUG LOG
 
 ## 2026-04-22
+- Added a Mongo-backed diagnostic mirror and a new `/ops` dashboard so operators can inspect recent warnings/errors and core health in one place.
+- Wired `recordDiagnostic` to mirror entries into Mongo without breaking the request path.
+- Added the `/ops` page, linked it from the account quick actions, and documented the operator workflow.
+- Added tests for the diagnostic mirror and incident snapshot helper.
+- Verified the incident-visibility slice with targeted Vitest, targeted ESLint, and a successful `pnpm build`.
+
+## 2026-04-22
 - Added `src/lib/background-tasks.ts` plus a Vercel cron route and local processor so attachment cleanup can happen off the request path.
 - Wired deal deletion to enqueue background cleanup work instead of waiting for file/blob deletion inline.
 - Added `CRON_SECRET` handling, background-task health visibility, and Mongo TTL/index coverage for queued maintenance jobs.
