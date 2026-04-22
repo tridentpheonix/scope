@@ -32,5 +32,6 @@
 devtmp.*
 scratch/*.out
 scratch/*.err
+.tmp-playwright/
 
 .vercel

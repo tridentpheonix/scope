@@ -6,6 +6,8 @@ function readEnv(name: string) {
 export const appEnv = {
   mongoUri: readEnv("MONGODB_URI"),
   mongoDbName: readEnv("MONGODB_DB_NAME"),
+  googleClientId: readEnv("GOOGLE_CLIENT_ID"),
+  googleClientSecret: readEnv("GOOGLE_CLIENT_SECRET"),
   nvidiaApiBaseUrl: readEnv("NVIDIA_API_BASE_URL"),
   nvidiaApiKey: readEnv("NVIDIA_API_KEY"),
   nvidiaModel: readEnv("NVIDIA_MODEL"),
@@ -32,6 +34,10 @@ export function isMongoConfigured() {
 
 export function isAuthConfigured() {
   return isMongoConfigured();
+}
+
+export function isGoogleAuthConfigured() {
+  return Boolean(appEnv.googleClientId && appEnv.googleClientSecret);
 }
 
 export function isAiConfigured() {

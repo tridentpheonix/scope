@@ -6,7 +6,11 @@ import { authClient } from "@/lib/auth/client";
 
 type Mode = "sign-in" | "sign-up";
 
-export function AuthPanel() {
+type AuthPanelProps = {
+  canUseGoogle?: boolean;
+};
+
+export function AuthPanel({ canUseGoogle = false }: AuthPanelProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
@@ -54,6 +58,21 @@ export function AuthPanel() {
           : "Could not create your account. Please retry.",
       );
     } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setStatus(null);
+    setIsBusy(true);
+
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+      });
+    } catch (error) {
+      console.error("auth_google_redirect_failed", error);
+      setStatus("Could not start Google sign-in right now.");
       setIsBusy(false);
     }
   }
@@ -150,6 +169,21 @@ export function AuthPanel() {
                 ? "Sign in"
                 : "Create account"}
           </button>
+          {canUseGoogle ? (
+            <>
+              <div className="basis-full pt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                or
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline bg-white"
+                disabled={isBusy}
+                onClick={handleGoogleSignIn}
+              >
+                Continue with Google
+              </button>
+            </>
+          ) : null}
         </div>
       </form>
     </div>

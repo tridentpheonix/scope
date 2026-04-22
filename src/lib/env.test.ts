@@ -37,3 +37,17 @@ describe("Stripe env guards", () => {
     expect(env.isStripeConfigured()).toBe(true);
   });
 });
+
+describe("Google auth env guards", () => {
+  it("requires both the client id and secret", async () => {
+    vi.stubEnv("GOOGLE_CLIENT_ID", "google-client-id");
+    vi.stubEnv("GOOGLE_CLIENT_SECRET", "");
+
+    let env = await loadEnv();
+    expect(env.isGoogleAuthConfigured()).toBe(false);
+
+    vi.stubEnv("GOOGLE_CLIENT_SECRET", "google-client-secret");
+    env = await loadEnv();
+    expect(env.isGoogleAuthConfigured()).toBe(true);
+  });
+});

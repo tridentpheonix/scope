@@ -179,7 +179,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                   <div className="mb-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
                     Change password
                   </div>
-                  <PasswordChangeForm />
+                  {authContext.user.hasPassword ? (
+                    <PasswordChangeForm />
+                  ) : (
+                    <p className="m-0 text-sm leading-7 text-slate-700">
+                      This account currently signs in with Google only. Password-based account recovery can be added later if you decide to enable it.
+                    </p>
+                  )}
                 </div>
                 <SignOutButton />
               </div>

@@ -19,7 +19,9 @@ type UserDocument = {
   email: string;
   emailNormalized: string;
   name: string | null;
-  passwordHash: string;
+  passwordHash: string | null;
+  googleSubject: string | null;
+  authProviders?: ("password" | "google")[];
   createdAt: string;
   updatedAt: string;
 };
@@ -113,6 +115,8 @@ export async function POST(request: Request) {
     emailNormalized,
     name: parsed.data.name?.trim() ?? null,
     passwordHash: hashPassword(parsed.data.password),
+    googleSubject: null,
+    authProviders: ["password"],
     createdAt: now,
     updatedAt: now,
   } satisfies UserDocument;

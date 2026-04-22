@@ -81,8 +81,16 @@ export const authClient = {
       );
       return result.data ?? result;
     },
-    social: async () => {
-      throw new Error("Social sign-in is not available in the first-party auth flow.");
+    social: async ({ provider }: { provider: "google" }) => {
+      if (typeof window === "undefined") {
+        throw new Error("Google sign-in can only start in the browser.");
+      }
+
+      if (provider !== "google") {
+        throw new Error("Unsupported social sign-in provider.");
+      }
+
+      window.location.assign("/api/auth/google");
     },
   },
   signOut: async ({

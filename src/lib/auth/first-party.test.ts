@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword } from "./first-party";
 const usersCollection = {
   findOne: vi.fn(),
   updateOne: vi.fn(),
+  insertOne: vi.fn(),
 };
 
 const sessionsCollection = {
@@ -44,6 +45,7 @@ describe("password changes", () => {
       emailNormalized: "owner@example.com",
       name: "Owner",
       passwordHash: originalHash,
+      googleSubject: null,
       createdAt: "2026-04-22T00:00:00.000Z",
       updatedAt: "2026-04-22T00:00:00.000Z",
     };
@@ -72,6 +74,7 @@ describe("password changes", () => {
       emailNormalized: "owner@example.com",
       name: "Owner",
       passwordHash: hashPassword("old-password"),
+      googleSubject: null,
       createdAt: "2026-04-22T00:00:00.000Z",
       updatedAt: "2026-04-22T00:00:00.000Z",
     });
@@ -83,5 +86,35 @@ describe("password changes", () => {
         newPassword: "new-password",
       }),
     ).rejects.toThrow("invalid_current_password");
+  });
+});
+
+describe("google auth linking", () => {
+  it("links a Google identity to an existing password user", async () => {
+    const { findOrCreateUserFromGoogleProfile } = await import("./first-party");
+    usersCollection.findOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        _id: "user-1",
+        email: "owner@example.com",
+        emailNormalized: "owner@example.com",
+        name: "Owner",
+        passwordHash: hashPassword("old-password"),
+        googleSubject: null,
+        authProviders: ["password"],
+        createdAt: "2026-04-22T00:00:00.000Z",
+        updatedAt: "2026-04-22T00:00:00.000Z",
+      });
+    usersCollection.updateOne.mockResolvedValue({ acknowledged: true });
+
+    const result = await findOrCreateUserFromGoogleProfile({
+      email: "owner@example.com",
+      name: "Owner Updated",
+      googleSubject: "google-sub-123",
+    });
+
+    expect(usersCollection.updateOne).toHaveBeenCalledTimes(1);
+    expect(result.user.authProviders).toEqual(expect.arrayContaining(["password", "google"]));
+    expect(result.user.hasGoogleAuth).toBe(true);
   });
 });

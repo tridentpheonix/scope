@@ -17,7 +17,8 @@ type UserDocument = {
   email: string;
   emailNormalized: string;
   name: string | null;
-  passwordHash: string;
+  passwordHash: string | null;
+  googleSubject: string | null;
 };
 
 function buildRateLimitedResponse(retryAfterSeconds: number) {

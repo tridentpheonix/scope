@@ -55,6 +55,11 @@ type IndexSpec = {
   options?: Parameters<Collection["createIndex"]>[1];
 };
 
+const WORKSPACE_STRIPE_CUSTOMER_INDEX_NAME = "workspaces_stripe_customer_unique";
+const workspaceStripeCustomerPartialFilter = {
+  stripeCustomerId: { $type: "string" },
+} as const;
+
 const mongoIndexes: IndexSpec[] = [
   {
     collection: "users",
@@ -66,8 +71,8 @@ const mongoIndexes: IndexSpec[] = [
     index: { stripeCustomerId: 1 },
     options: {
       unique: true,
-      sparse: true,
-      name: "workspaces_stripe_customer_unique",
+      partialFilterExpression: workspaceStripeCustomerPartialFilter,
+      name: WORKSPACE_STRIPE_CUSTOMER_INDEX_NAME,
     },
   },
   {
@@ -177,6 +182,46 @@ const mongoIndexes: IndexSpec[] = [
   },
 ];
 
+type MongoIndexInfoLike = {
+  name?: string;
+  key?: Record<string, unknown>;
+  unique?: boolean;
+  sparse?: boolean;
+  partialFilterExpression?: unknown;
+};
+
+export function shouldRecreateWorkspaceStripeCustomerIndex(index: MongoIndexInfoLike | null | undefined) {
+  if (!index || index.name !== WORKSPACE_STRIPE_CUSTOMER_INDEX_NAME) {
+    return false;
+  }
+
+  const key = index.key ?? {};
+  const partialFilter = index.partialFilterExpression as
+    | {
+        stripeCustomerId?: {
+          $type?: unknown;
+        };
+      }
+    | undefined;
+
+  return (
+    key.stripeCustomerId !== 1 ||
+    index.unique !== true ||
+    index.sparse === true ||
+    partialFilter?.stripeCustomerId?.$type !== "string"
+  );
+}
+
+async function ensureCompatibleMongoIndexes(db: Awaited<ReturnType<typeof getMongoDb>>) {
+  const workspaces = db.collection("workspaces");
+  const indexes = await workspaces.indexes();
+  const stripeCustomerIndex = indexes.find((index) => index.name === WORKSPACE_STRIPE_CUSTOMER_INDEX_NAME);
+
+  if (shouldRecreateWorkspaceStripeCustomerIndex(stripeCustomerIndex)) {
+    await workspaces.dropIndex(WORKSPACE_STRIPE_CUSTOMER_INDEX_NAME);
+  }
+}
+
 export async function ensureMongoIndexes() {
   if (!isMongoConfigured()) {
     return;
@@ -185,6 +230,7 @@ export async function ensureMongoIndexes() {
   if (!globalThis.__scopeosMongoIndexesPromise) {
     globalThis.__scopeosMongoIndexesPromise = (async () => {
       const db = await getMongoDb();
+      await ensureCompatibleMongoIndexes(db);
 
       for (const spec of mongoIndexes) {
         await db.collection(spec.collection).createIndex(spec.index, spec.options);

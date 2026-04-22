@@ -1,7 +1,7 @@
 import { AuthPanel } from "@/components/auth-panel";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth/server";
-import { isAuthConfigured } from "@/lib/env";
+import { isAuthConfigured, isGoogleAuthConfigured } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +9,11 @@ type SignInPageProps = {
   searchParams?:
     | {
         password?: string;
+        google?: string;
       }
     | Promise<{
         password?: string;
+        google?: string;
       }>;
 };
 
@@ -19,6 +21,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const user = await getCurrentUser();
   const resolvedSearchParams = await searchParams;
   const passwordChanged = resolvedSearchParams?.password === "changed";
+  const googleState = resolvedSearchParams?.google;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">
@@ -47,8 +50,30 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               Your old sessions were signed out. Please sign in again with your new password.
             </p>
           </div>
+        ) : googleState === "cancelled" ? (
+          <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
+            <strong className="block text-base">Google sign-in was cancelled.</strong>
+            <p className="m-0 mt-2">You can retry Google sign-in or continue with email and password.</p>
+          </div>
+        ) : googleState === "unavailable" ? (
+          <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
+            <strong className="block text-base">Google sign-in is not configured yet.</strong>
+            <p className="m-0 mt-2">
+              Add <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> before enabling the Google button.
+            </p>
+          </div>
+        ) : googleState === "unverified" ? (
+          <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-sm leading-7 text-rose-900 shadow-sm md:p-8">
+            <strong className="block text-base">Google account email is not verified.</strong>
+            <p className="m-0 mt-2">Use a Google account with a verified email address or sign in with your password.</p>
+          </div>
+        ) : googleState === "failed" ? (
+          <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-sm leading-7 text-rose-900 shadow-sm md:p-8">
+            <strong className="block text-base">Google sign-in failed.</strong>
+            <p className="m-0 mt-2">Please try again or continue with email and password.</p>
+          </div>
         ) : isAuthConfigured() ? (
-          <AuthPanel />
+          <AuthPanel canUseGoogle={isGoogleAuthConfigured()} />
         ) : (
           <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
             <strong className="block text-base">Authentication is not configured yet.</strong>

@@ -5,13 +5,24 @@ import { ensureMongoIndexes, getMongoCollection } from "../mongo";
 
 export const AUTH_COOKIE_NAME = "scopeos-session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+export type AuthProvider = "password" | "google";
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  hasPassword: boolean;
+  hasGoogleAuth: boolean;
+  authProviders: AuthProvider[];
+};
 
 export type AuthUserRecord = {
   _id: string;
   email: string;
   emailNormalized: string;
   name: string | null;
-  passwordHash: string;
+  passwordHash: string | null;
+  googleSubject: string | null;
+  authProviders?: AuthProvider[];
   createdAt: string;
   updatedAt: string;
 };
@@ -39,7 +50,11 @@ export function hashPassword(password: string) {
   return `${salt}:${derived}`;
 }
 
-export function verifyPassword(password: string, storedHash: string) {
+export function verifyPassword(password: string, storedHash: string | null | undefined) {
+  if (!storedHash) {
+    return false;
+  }
+
   const [salt, expected] = storedHash.split(":");
   if (!salt || !expected) {
     return false;
@@ -99,6 +114,41 @@ export async function attachSessionCookie(response: NextResponse, userId: string
   });
 }
 
+function buildAuthProviders(user: Pick<AuthUserRecord, "passwordHash" | "googleSubject" | "authProviders">) {
+  const providers = new Set<AuthProvider>();
+
+  if (Array.isArray(user.authProviders)) {
+    for (const provider of user.authProviders) {
+      if (provider === "password" || provider === "google") {
+        providers.add(provider);
+      }
+    }
+  }
+
+  if (user.passwordHash) {
+    providers.add("password");
+  }
+
+  if (user.googleSubject) {
+    providers.add("google");
+  }
+
+  return [...providers];
+}
+
+function mapAuthenticatedUser(user: AuthUserRecord): SessionUser {
+  const authProviders = buildAuthProviders(user);
+
+  return {
+    id: user._id,
+    email: user.email,
+    name: user.name,
+    hasPassword: Boolean(user.passwordHash),
+    hasGoogleAuth: Boolean(user.googleSubject),
+    authProviders,
+  };
+}
+
 export async function revokeAllSessionsForUser(userId: string) {
   await ensureMongoIndexes();
 
@@ -136,11 +186,102 @@ export async function changePasswordForUser(options: {
   await revokeAllSessionsForUser(options.userId);
 
   return {
-    user: {
-      id: user._id,
-      email: user.email,
-      name: user.name,
-    },
+    user: mapAuthenticatedUser(user),
+  };
+}
+
+export async function findOrCreateUserFromGoogleProfile(options: {
+  email: string;
+  name?: string | null;
+  googleSubject: string;
+}) {
+  await ensureMongoIndexes();
+
+  const users = await getMongoCollection<AuthUserRecord>("users");
+  const emailNormalized = normalizeEmail(options.email);
+  const now = new Date().toISOString();
+  const trimmedName = options.name?.trim() ?? null;
+
+  const userByGoogleSubject = await users.findOne({ googleSubject: options.googleSubject });
+  if (userByGoogleSubject) {
+    await users.updateOne(
+      { _id: userByGoogleSubject._id },
+      {
+        $set: {
+          email: options.email.trim(),
+          emailNormalized,
+          name: trimmedName ?? userByGoogleSubject.name,
+          authProviders: buildAuthProviders({
+            ...userByGoogleSubject,
+            googleSubject: options.googleSubject,
+          }),
+          updatedAt: now,
+        },
+      },
+    );
+
+    return {
+      user: mapAuthenticatedUser({
+        ...userByGoogleSubject,
+        email: options.email.trim(),
+        emailNormalized,
+        name: trimmedName ?? userByGoogleSubject.name,
+        googleSubject: options.googleSubject,
+        authProviders: buildAuthProviders({
+          ...userByGoogleSubject,
+          googleSubject: options.googleSubject,
+        }),
+        updatedAt: now,
+      }),
+    };
+  }
+
+  const userByEmail = await users.findOne({ emailNormalized });
+  if (userByEmail) {
+    const authProviders = buildAuthProviders({
+      ...userByEmail,
+      googleSubject: options.googleSubject,
+    });
+
+    await users.updateOne(
+      { _id: userByEmail._id },
+      {
+        $set: {
+          googleSubject: options.googleSubject,
+          name: trimmedName ?? userByEmail.name,
+          authProviders,
+          updatedAt: now,
+        },
+      },
+    );
+
+    return {
+      user: mapAuthenticatedUser({
+        ...userByEmail,
+        googleSubject: options.googleSubject,
+        name: trimmedName ?? userByEmail.name,
+        authProviders,
+        updatedAt: now,
+      }),
+    };
+  }
+
+  const user: AuthUserRecord = {
+    _id: crypto.randomUUID(),
+    email: options.email.trim(),
+    emailNormalized,
+    name: trimmedName,
+    passwordHash: null,
+    googleSubject: options.googleSubject,
+    authProviders: ["google"],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await users.insertOne(user);
+
+  return {
+    user: mapAuthenticatedUser(user),
   };
 }
 
@@ -198,10 +339,6 @@ export async function readAuthenticatedUserFromCookies() {
       userId: session.userId,
       expiresAt: session.expiresAt.toISOString(),
     },
-    user: {
-      id: user._id,
-      email: user.email,
-      name: user.name,
-    },
+    user: mapAuthenticatedUser(user),
   };
 }

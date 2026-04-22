@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { readAuthenticatedUserFromCookies } from "./first-party";
+import { readAuthenticatedUserFromCookies, type SessionUser } from "./first-party";
 import { ensureWorkspaceForUser } from "../workspace-billing";
 
 export const auth = null;
@@ -38,11 +38,7 @@ export async function getCurrentWorkspaceContextOrNull() {
   return await getWorkspaceContextForUser(user);
 }
 
-async function getWorkspaceContextForUser(user: {
-  id: string;
-  email: string;
-  name?: string | null;
-}) {
+async function getWorkspaceContextForUser(user: SessionUser) {
   const workspace = await ensureWorkspaceForUser({
     id: user.id,
     email: user.email,
