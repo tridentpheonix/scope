@@ -41,24 +41,36 @@ async function main() {
     throw new Error("Missing required --backup-dir argument.");
   }
 
-  const { restoreMongoBackup } = await import("../src/lib/mongo-backup");
-  const summary = await restoreMongoBackup({
-    backupDir,
-    collections: readCollections(),
-    dropExisting: readFlag("--drop-existing"),
-  });
+  const mongoBackupModule = (await import("../src/lib/mongo-backup")) as typeof import("../src/lib/mongo-backup") & {
+    default?: typeof import("../src/lib/mongo-backup");
+  };
+  const { restoreMongoBackup } = mongoBackupModule.default ?? mongoBackupModule;
+  const mongoModule = (await import("../src/lib/mongo")) as typeof import("../src/lib/mongo") & {
+    default?: typeof import("../src/lib/mongo");
+  };
+  const { closeMongoConnection } = mongoModule.default ?? mongoModule;
 
-  console.log(
-    JSON.stringify(
-      {
-        ok: true,
-        ...summary,
-        backupDir: path.resolve(summary.backupDir),
-      },
-      null,
-      2,
-    ),
-  );
+  try {
+    const summary = await restoreMongoBackup({
+      backupDir,
+      collections: readCollections(),
+      dropExisting: readFlag("--drop-existing"),
+    });
+
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          ...summary,
+          backupDir: path.resolve(summary.backupDir),
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await closeMongoConnection();
+  }
 }
 
 main().catch((error) => {

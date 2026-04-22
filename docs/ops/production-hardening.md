@@ -63,8 +63,14 @@ ScopeOS also includes local JSON backup/restore helpers to make the drill repeat
 
 - `pnpm db:backup -- --base-dir backups --name staging-drill`
 - `pnpm db:restore -- --backup-dir backups/staging-drill --drop-existing`
+- `pnpm db:drill` to back up the source DB, restore into a staging target, and compare the restored manifest
 
 These scripts are intended for staging copies and restore drills, not as a replacement for Atlas native backups.
+
+To run the automated drill, set:
+
+- `DRILL_MONGODB_URI`
+- `DRILL_MONGODB_DB_NAME`
 
 Recommended drill flow:
 

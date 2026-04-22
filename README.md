@@ -35,6 +35,7 @@ Copy `.env.example` to `.env` and set the values you need:
 - `ALERT_WEBHOOK_SECRET` if your alert endpoint expects a shared secret header
 - `CRON_SECRET` for the Vercel cron worker that processes background tasks
 - `OPS_OPERATOR_EMAILS` to allowlist users who can access `/ops`
+- `DRILL_MONGODB_URI` and `DRILL_MONGODB_DB_NAME` for restore drill validation
 - AI provider credentials and model names
 
 ## Local and production health

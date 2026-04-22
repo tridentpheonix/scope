@@ -32,25 +32,36 @@ function readCollections() {
 async function main() {
   loadLocalEnvFile();
 
-  const { createMongoBackup } = await import("../src/lib/mongo-backup");
+  const mongoBackupModule = (await import("../src/lib/mongo-backup")) as typeof import("../src/lib/mongo-backup") & {
+    default?: typeof import("../src/lib/mongo-backup");
+  };
+  const { createMongoBackup } = mongoBackupModule.default ?? mongoBackupModule;
+  const mongoModule = (await import("../src/lib/mongo")) as typeof import("../src/lib/mongo") & {
+    default?: typeof import("../src/lib/mongo");
+  };
+  const { closeMongoConnection } = mongoModule.default ?? mongoModule;
 
-  const summary = await createMongoBackup({
-    baseDir: readValue("--base-dir") ?? readValue("--baseDir") ?? undefined,
-    backupName: readValue("--name") ?? readValue("--backup-name") ?? undefined,
-    collections: readCollections(),
-  });
+  try {
+    const summary = await createMongoBackup({
+      baseDir: readValue("--base-dir") ?? readValue("--baseDir") ?? undefined,
+      backupName: readValue("--name") ?? readValue("--backup-name") ?? undefined,
+      collections: readCollections(),
+    });
 
-  console.log(
-    JSON.stringify(
-      {
-        ok: true,
-        ...summary,
-        backupDir: path.resolve(summary.backupDir),
-      },
-      null,
-      2,
-    ),
-  );
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          ...summary,
+          backupDir: path.resolve(summary.backupDir),
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await closeMongoConnection();
+  }
 }
 
 main().catch((error) => {

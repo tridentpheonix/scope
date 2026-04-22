@@ -3,7 +3,10 @@ import { loadLocalEnvFile } from "./load-local-env";
 async function main() {
   try {
     loadLocalEnvFile();
-    const { closeMongoConnection, ensureMongoIndexes, getMongoDb } = await import("../lib/mongo");
+    const mongoModule = (await import("../lib/mongo")) as typeof import("../lib/mongo") & {
+      default?: typeof import("../lib/mongo");
+    };
+    const { closeMongoConnection, ensureMongoIndexes, getMongoDb } = mongoModule.default ?? mongoModule;
     const db = await getMongoDb();
     await db.command({ ping: 1 });
     await ensureMongoIndexes();

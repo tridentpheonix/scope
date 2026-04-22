@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { BSON, type Collection, type Document } from "mongodb";
-import { ensureMongoIndexes, getMongoDb } from "./mongo";
+import { getMongoDb } from "./mongo";
 
 export const DEFAULT_MONGO_BACKUP_COLLECTIONS = [
   "users",
@@ -96,7 +96,6 @@ async function chunkInsert<TDocument extends Document>(collection: Collection<TD
 }
 
 export async function createMongoBackup(options: MongoBackupOptions = {}): Promise<MongoBackupSummary> {
-  await ensureMongoIndexes();
   const db = await getMongoDb();
   const backupDir = getBackupDir(options.baseDir, options.backupName);
   await fs.mkdir(backupDir, { recursive: true });
@@ -131,7 +130,6 @@ export async function createMongoBackup(options: MongoBackupOptions = {}): Promi
 }
 
 export async function restoreMongoBackup(options: MongoRestoreOptions): Promise<MongoRestoreSummary> {
-  await ensureMongoIndexes();
   const db = await getMongoDb();
   const manifest = await readJsonFile<MongoBackupManifest>(path.join(options.backupDir, "manifest.json"));
   const targetCollections = normalizeCollections(options.collections);

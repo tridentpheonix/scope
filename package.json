@@ -12,6 +12,7 @@
     "db:migrate": "tsx src/scripts/test-db.ts",
     "db:backup": "tsx scripts/mongo-backup.ts",
     "db:restore": "tsx scripts/mongo-restore.ts",
+    "db:drill": "tsx scripts/mongo-restore-drill.ts",
     "maintenance:process-background-tasks": "tsx scripts/process-background-tasks.ts",
     "attachments:reconcile": "tsx scripts/reconcile-orphan-attachments.ts",
     "smoke:browser": "node scripts/browser-smoke.js",
