@@ -43,49 +43,63 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               </a>
             </div>
           </div>
-        ) : passwordChanged ? (
-          <div className="rounded-[2rem] border border-emerald-200 bg-emerald-50 p-6 text-sm leading-7 text-emerald-950 shadow-sm md:p-8">
-            <strong className="block text-base">Password changed successfully.</strong>
-            <p className="m-0 mt-2">
-              Your old sessions were signed out. Please sign in again with your new password.
-            </p>
-          </div>
-        ) : googleState === "cancelled" ? (
-          <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
-            <strong className="block text-base">Google sign-in was cancelled.</strong>
-            <p className="m-0 mt-2">You can retry Google sign-in or continue with email and password.</p>
-          </div>
-        ) : googleState === "unavailable" ? (
-          <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
-            <strong className="block text-base">Google sign-in is not configured yet.</strong>
-            <p className="m-0 mt-2">
-              Add <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> before enabling the Google button.
-            </p>
-          </div>
-        ) : googleState === "unverified" ? (
-          <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-sm leading-7 text-rose-900 shadow-sm md:p-8">
-            <strong className="block text-base">Google account email is not verified.</strong>
-            <p className="m-0 mt-2">Use a Google account with a verified email address or sign in with your password.</p>
-          </div>
-        ) : googleState === "failed" ? (
-          <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-sm leading-7 text-rose-900 shadow-sm md:p-8">
-            <strong className="block text-base">Google sign-in failed.</strong>
-            <p className="m-0 mt-2">Please try again or continue with email and password.</p>
-          </div>
-        ) : isAuthConfigured() ? (
-          <AuthPanel canUseGoogle={isGoogleAuthConfigured()} />
         ) : (
-          <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
-            <strong className="block text-base">Authentication is not configured yet.</strong>
-            <p className="m-0 mt-1">
-              To enable sign-up and sign-in, you must add <code>MONGODB_URI</code> and <code>MONGODB_DB_NAME</code> to your <code>.env</code> file.
-            </p>
-            <p className="mt-4">
-              1. Provision your own <strong>MongoDB</strong> database.<br />
-              2. Paste the connection string into <code>MONGODB_URI</code>.<br />
-              3. Set the database name in <code>MONGODB_DB_NAME</code>.
-            </p>
-          </div>
+          <>
+            {passwordChanged ? (
+              <div className="rounded-[2rem] border border-emerald-200 bg-emerald-50 p-6 text-sm leading-7 text-emerald-950 shadow-sm md:p-8">
+                <strong className="block text-base">Password changed successfully.</strong>
+                <p className="m-0 mt-2">
+                  Your old sessions were signed out. Please sign in again with your new password.
+                </p>
+              </div>
+            ) : null}
+
+            {googleState === "cancelled" ? (
+              <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
+                <strong className="block text-base">Google sign-in was cancelled.</strong>
+                <p className="m-0 mt-2">You can retry Google sign-in or continue with email and password.</p>
+              </div>
+            ) : null}
+
+            {googleState === "unavailable" ? (
+              <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
+                <strong className="block text-base">Google sign-in is not configured yet.</strong>
+                <p className="m-0 mt-2">
+                  Add <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> before enabling the Google button.
+                </p>
+              </div>
+            ) : null}
+
+            {googleState === "unverified" ? (
+              <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-sm leading-7 text-rose-900 shadow-sm md:p-8">
+                <strong className="block text-base">Google account email is not verified.</strong>
+                <p className="m-0 mt-2">Use a Google account with a verified email address or sign in with your password.</p>
+              </div>
+            ) : null}
+
+            {googleState === "failed" ? (
+              <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-sm leading-7 text-rose-900 shadow-sm md:p-8">
+                <strong className="block text-base">Google sign-in failed.</strong>
+                <p className="m-0 mt-2">Please try again or continue with email and password.</p>
+              </div>
+            ) : null}
+
+            {isAuthConfigured() ? (
+              <AuthPanel canUseGoogle={isGoogleAuthConfigured()} />
+            ) : (
+              <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-950 shadow-sm md:p-8">
+                <strong className="block text-base">Authentication is not configured yet.</strong>
+                <p className="m-0 mt-1">
+                  To enable sign-up and sign-in, you must add <code>MONGODB_URI</code> and <code>MONGODB_DB_NAME</code> to your <code>.env</code> file.
+                </p>
+                <p className="mt-4">
+                  1. Provision your own <strong>MongoDB</strong> database.<br />
+                  2. Paste the connection string into <code>MONGODB_URI</code>.<br />
+                  3. Set the database name in <code>MONGODB_DB_NAME</code>.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>
