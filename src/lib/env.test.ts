@@ -51,3 +51,33 @@ describe("Google auth env guards", () => {
     expect(env.isGoogleAuthConfigured()).toBe(true);
   });
 });
+
+describe("App origin resolution", () => {
+  it("falls back to the request origin when no app base URL is configured", async () => {
+    const env = await loadEnv();
+
+    expect(env.resolveAppOrigin(new Request("https://scope-wheat.vercel.app/auth/sign-in"))).toBe(
+      "https://scope-wheat.vercel.app",
+    );
+  });
+
+  it("ignores a localhost app base URL for non-local production requests", async () => {
+    vi.stubEnv("APP_BASE_URL", "http://localhost:3000");
+
+    const env = await loadEnv();
+
+    expect(env.resolveAppOrigin(new Request("https://scope-wheat.vercel.app/auth/sign-in"))).toBe(
+      "https://scope-wheat.vercel.app",
+    );
+  });
+
+  it("still honors a configured non-local canonical origin", async () => {
+    vi.stubEnv("APP_BASE_URL", "https://app.scopeos.com");
+
+    const env = await loadEnv();
+
+    expect(env.resolveAppOrigin(new Request("https://scope-wheat.vercel.app/auth/sign-in"))).toBe(
+      "https://app.scopeos.com",
+    );
+  });
+});

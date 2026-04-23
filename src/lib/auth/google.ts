@@ -1,6 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { NextResponse } from "next/server";
-import { appEnv, requireEnv } from "../env";
+import { appEnv, requireEnv, resolveAppOrigin } from "../env";
 
 export const GOOGLE_OAUTH_STATE_COOKIE_NAME = "scopeos-google-oauth-state";
 export const GOOGLE_OAUTH_CODE_VERIFIER_COOKIE_NAME = "scopeos-google-oauth-code-verifier";
@@ -23,7 +23,7 @@ export type GoogleUserProfile = {
 };
 
 function getAppOrigin(request: Request) {
-  return appEnv.appBaseUrl ?? new URL(request.url).origin;
+  return resolveAppOrigin(request);
 }
 
 export function getGoogleCallbackUrl(request: Request) {

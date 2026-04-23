@@ -3,6 +3,10 @@ function readEnv(name: string) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
+function isLocalHostname(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
 export const appEnv = {
   mongoUri: readEnv("MONGODB_URI"),
   mongoDbName: readEnv("MONGODB_DB_NAME"),
@@ -97,6 +101,24 @@ export function isStripeWebhookConfigured() {
 
 export function isStripeConfigured() {
   return isStripeWebhookConfigured();
+}
+
+export function resolveAppOrigin(request: Request) {
+  const requestOrigin = new URL(request.url).origin;
+
+  if (!appEnv.appBaseUrl) {
+    return requestOrigin;
+  }
+
+  const configuredOrigin = new URL(appEnv.appBaseUrl).origin;
+  const configuredHostname = new URL(configuredOrigin).hostname;
+  const requestHostname = new URL(requestOrigin).hostname;
+
+  if (isLocalHostname(configuredHostname) && !isLocalHostname(requestHostname)) {
+    return requestOrigin;
+  }
+
+  return configuredOrigin;
 }
 
 export function requireEnv(value: string | null, name: string) {

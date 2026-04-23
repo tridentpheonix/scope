@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { appEnv, isStripeCheckoutConfigured, requireEnv } from "./env";
+import { appEnv, isStripeCheckoutConfigured, requireEnv, resolveAppOrigin } from "./env";
 
 let stripeInstance: Stripe | null = null;
 
@@ -40,7 +40,7 @@ export function getPlanFromPriceId(priceId: string | null | undefined): PaidPlan
 }
 
 export function getAbsoluteUrl(request: Request, path: string) {
-  const origin = appEnv.appBaseUrl ?? new URL(request.url).origin;
+  const origin = resolveAppOrigin(request);
   return new URL(path, origin).toString();
 }
 
