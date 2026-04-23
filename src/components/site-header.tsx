@@ -64,6 +64,9 @@ export async function SiteHeader({
               <Link href="/pricing" className="transition hover:text-white">
                 Pricing
               </Link>
+              <Link href="/support" className="transition hover:text-white">
+                Support
+              </Link>
               {authContext?.user ? (
                 <Link href="/account" className="transition hover:text-white">
                   Account

@@ -16,6 +16,7 @@
     "maintenance:process-background-tasks": "tsx scripts/process-background-tasks.ts",
     "attachments:reconcile": "tsx scripts/reconcile-orphan-attachments.ts",
     "smoke:browser": "node scripts/browser-smoke.js",
+    "smoke:launch": "node scripts/live-launch-smoke.js",
     "eval:ai": "tsx scripts/ai-eval.ts"
   },
   "dependencies": {

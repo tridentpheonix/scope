@@ -31,6 +31,16 @@
 
 ## Phase 1: Data safety baseline
 
+### Canonical app URL
+
+Production should use:
+
+- `APP_BASE_URL=https://scope-wheat.vercel.app`
+
+Preview deployments can safely fall back to the request origin. The application also ignores a
+stale localhost `APP_BASE_URL` when handling non-local production/preview requests so OAuth and
+Stripe redirects do not drift back to local development.
+
 ### Rotate the exposed MongoDB password
 
 If a database password has been shared anywhere outside Atlas, rotate it:
@@ -145,6 +155,10 @@ If a webhook needs to be reprocessed:
 3. Confirm the event transitions from `failed` to `processing` to `processed`.
 4. Verify the workspace billing state changed as expected.
 
+Targeted regression tests:
+
+- `pnpm exec vitest run src/lib/stripe-webhook-events.test.ts src/lib/stripe-billing-sync.test.ts`
+
 ## Incident visibility dashboard
 
 ### What `/ops` shows
@@ -206,6 +220,15 @@ When adding or changing document fields:
 2. Add or adjust indexes.
 3. Add a migration script if existing documents need transformation.
 4. Test against a copy of production data before shipping.
+
+See `docs/ops/data-lifecycle.md` for ownership, retention, and migration defaults.
+
+## Support and manual recovery
+
+- Public support routing lives at `/support`.
+- Authenticated pilot feedback lives at `/feedback`.
+- Password reset email is deferred; use the manual recovery procedure in
+  `docs/ops/operator-runbook.md` during the pilot.
 
 ## Operator checklist
 

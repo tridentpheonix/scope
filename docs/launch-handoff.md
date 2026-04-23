@@ -15,12 +15,15 @@ ScopeOS is a scoped-brief product for small web design agencies. The core flow i
 The app currently includes:
 
 - first-party email/password auth with app-owned session cookies
+- Google sign-in
 - MongoDB-backed workspace storage
 - Stripe billing and plan gating
 - NVIDIA-compatible AI generation with deterministic fallback
 - provider labels and AI run history
 - browser smoke coverage for the critical journey
 - structured diagnostics for core failures
+- public support routing at `/support`
+- authenticated pilot feedback at `/feedback`
 
 ## Local environment
 
@@ -33,6 +36,8 @@ Minimum important values:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `APP_BASE_URL`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
 - `NVIDIA_API_BASE_URL`
 - `NVIDIA_API_KEY`
 - `NVIDIA_MODEL`
@@ -68,6 +73,15 @@ Expected path:
 
 Success should print JSON with `ok: true`.
 
+For live launch smoke with an existing account:
+
+```powershell
+$env:SMOKE_BASE_URL="https://scope-wheat.vercel.app"
+$env:SMOKE_EMAIL="<pilot account email>"
+$env:SMOKE_PASSWORD="<pilot account password>"
+pnpm smoke:launch
+```
+
 ## Verification commands
 
 Use the lightest useful checks:
@@ -96,12 +110,17 @@ pnpm eval:ai
 - [x] Confirm the browser smoke passes end to end
 - [x] Confirm build passes
 - [x] Confirm launch docs are current
+- [x] Confirm Google sign-in is enabled in production
+- [x] Confirm `APP_BASE_URL` is set for production
+- [x] Confirm `/support`, `/ops`, and `/api/health` are part of the launch operator flow
 
 ## Known limits
 
 - No blocking build warnings remain in the current launch flow.
 - The local dev auth session cookie is a QA convenience and should remain dev-only.
 - The AI timeout is intentionally bounded so slow live generation falls back instead of hanging the browser flow.
+- Password reset email is not enabled yet; use manual recovery during the pilot.
+- Observability and alert webhook URLs need real destinations before incident notifications are active.
 
 ## Handoff notes
 
@@ -110,3 +129,5 @@ pnpm eval:ai
 - Launch-readiness cleanup is complete; the next step is post-launch feedback and follow-up polish only.
 - Use `docs/pilot-feedback.md` as the intake playbook for the first real users.
 - The in-app feedback inbox now lives at `/feedback`.
+- Use `docs/launch-note.md` for pilot instructions.
+- Use `docs/ops/operator-runbook.md` for health, auth recovery, Stripe replay, and restore-drill procedures.

@@ -9,6 +9,8 @@
 For the live MongoDB + first-party-auth stack, see:
 
 - `docs/ops/production-hardening.md`
+- `docs/ops/operator-runbook.md`
+- `docs/ops/data-lifecycle.md`
 
 That file covers:
 
@@ -23,6 +25,8 @@ That file covers:
 - backup/restore drill steps
 - schema-change hygiene
 - the `pnpm db:backup`, `pnpm db:restore`, and `pnpm db:drill` drill scripts
+
+For pilot instructions, see `docs/launch-note.md`.
 
 ---
 
