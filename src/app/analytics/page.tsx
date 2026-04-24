@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ExportBlockerForm } from "@/components/export-blocker-form";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
@@ -7,6 +8,14 @@ import { readAnalyticsDashboard } from "@/lib/analytics-storage";
 import { formatDateTimeLabel } from "@/lib/risk-check-presenters";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Analytics",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AnalyticsPage() {
   const authContext = await getCurrentWorkspaceContext();

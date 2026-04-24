@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { BillingActions } from "@/components/billing-actions";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteHeader } from "@/components/site-header";
@@ -9,6 +10,14 @@ import { canAccessOpsDashboard } from "@/lib/operator-access";
 import { canUseStripeBilling } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Account",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type AccountPageProps = {
   searchParams?:

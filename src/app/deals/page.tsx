@@ -1,4 +1,4 @@
-import type { Route } from "next";
+import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { DealDeleteButton } from "@/components/deal-delete-button";
 import { SiteHeader } from "@/components/site-header";
@@ -8,6 +8,14 @@ import { formatDateTimeLabel } from "@/lib/risk-check-presenters";
 import { readSavedDealSummaries } from "@/lib/saved-deals";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Saved deals",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type SavedDealsPageProps = {
   searchParams?: {

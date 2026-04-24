@@ -1,7 +1,24 @@
+import type { Metadata } from "next";
 import { RiskCheckForm } from "@/components/risk-check-form";
 import { SiteHeader } from "@/components/site-header";
+import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Free Scope Risk Check",
+  description:
+    "Submit one real website brief and get a ScopeOS risk check for missing requirements, vague assumptions, revision risk, and pricing exposure.",
+  alternates: {
+    canonical: getSiteUrl("/risk-check"),
+  },
+  openGraph: {
+    title: "Free Scope Risk Check for website redesign projects",
+    description:
+      "Use ScopeOS to catch scope gaps and pricing risk before you send a website proposal.",
+    url: getSiteUrl("/risk-check"),
+  },
+};
 
 const checklist = [
   "Content ownership and migration responsibility",

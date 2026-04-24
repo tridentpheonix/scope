@@ -1,12 +1,29 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { BillingActions } from "@/components/billing-actions";
 import { PlanCheckoutButton } from "@/components/plan-checkout-button";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentWorkspaceContextOrNull } from "@/lib/auth/server";
 import { getPlanLabel } from "@/lib/billing-gates";
 import { canUseStripeBilling } from "@/lib/stripe";
+import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+  description:
+    "Start ScopeOS with a free scope risk check, then upgrade for saved deal history, branded exports, analytics, and team workflow support.",
+  alternates: {
+    canonical: getSiteUrl("/pricing"),
+  },
+  openGraph: {
+    title: "ScopeOS pricing",
+    description:
+      "Free scope risk check, Solo, and Team plans for small web design agencies that want safer proposal scoping.",
+    url: getSiteUrl("/pricing"),
+  },
+};
 
 const plans = [
   {

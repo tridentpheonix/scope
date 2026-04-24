@@ -1,8 +1,24 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentWorkspaceContextOrNull } from "@/lib/auth/server";
+import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Support",
+  description:
+    "Get ScopeOS pilot support for sign-in, billing, feedback, and manual account recovery during early production use.",
+  alternates: {
+    canonical: getSiteUrl("/support"),
+  },
+  openGraph: {
+    title: "ScopeOS support",
+    description: "Support routing for ScopeOS sign-in, billing, and product feedback.",
+    url: getSiteUrl("/support"),
+  },
+};
 
 const supportPaths = [
   {

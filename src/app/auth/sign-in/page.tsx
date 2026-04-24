@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import { AuthPanel } from "@/components/auth-panel";
 import { SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth/server";
 import { isAuthConfigured, isGoogleAuthConfigured } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Sign in",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type SignInPageProps = {
   searchParams?:

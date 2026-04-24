@@ -1,8 +1,10 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { WorkspaceLaunchpad } from "@/components/workspace-launchpad";
 import { getCurrentWorkspaceContextOrNull } from "@/lib/auth/server";
 import { readSavedDealSummaries } from "@/lib/saved-deals";
+import { getSiteUrl, siteConfig } from "@/lib/site";
 
 const painPoints = [
   "You waste 2–6 hours turning call notes into a proposal draft.",
@@ -51,6 +53,20 @@ const faqs = [
 ];
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "ScopeOS | Stop losing margin to messy website briefs",
+  description:
+    "ScopeOS helps small web design agencies catch scope gaps, vague assumptions, and pricing risk before sending fixed-fee website proposals.",
+  alternates: {
+    canonical: getSiteUrl("/"),
+  },
+  openGraph: {
+    title: "ScopeOS | Stop losing margin to messy website briefs",
+    description: siteConfig.description,
+    url: getSiteUrl("/"),
+  },
+};
 
 export default async function HomePage() {
   const authContext = await getCurrentWorkspaceContextOrNull();

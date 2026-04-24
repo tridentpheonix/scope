@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
+import { siteConfig, getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,9 +14,33 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "ScopeOS",
-  description:
-    "Turn messy website briefs, transcripts, and call notes into a scoped proposal pack with pricing tiers, exclusions, and risk flags.",
+  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  keywords: [...siteConfig.keywords],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: siteConfig.name,
+    url: getSiteUrl("/"),
+    title: siteConfig.title,
+    description: siteConfig.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.title,
+    description: siteConfig.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +51,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}>
-        {children}
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
+        <div id="main-content">{children}</div>
       </body>
     </html>
   );

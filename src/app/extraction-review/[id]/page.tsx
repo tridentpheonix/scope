@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ExtractionReviewEditor } from "@/components/extraction-review-editor";
 import { SiteHeader } from "@/components/site-header";
@@ -7,6 +8,14 @@ import { readExtractionReviewRecord } from "@/lib/extraction-review-storage";
 import { readRiskCheckSubmissionById } from "@/lib/risk-check-storage";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Extraction review",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type ExtractionReviewPageProps = {
   params: Promise<{ id: string }>;

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 ﻿import { notFound } from "next/navigation";
 import { ProposalPackEditor } from "@/components/proposal-pack-editor";
 import { SiteHeader } from "@/components/site-header";
@@ -12,6 +13,14 @@ import { readProposalPackRecord } from "@/lib/proposal-pack-storage";
 import { readRiskCheckSubmissionById } from "@/lib/risk-check-storage";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Proposal pack",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type ProposalPackPageProps = {
   params: Promise<{ id: string }>;

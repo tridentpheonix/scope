@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { PilotFeedbackForm } from "@/components/pilot-feedback-form";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
@@ -6,6 +7,14 @@ import { formatDateTimeLabel } from "@/lib/risk-check-presenters";
 import { readPilotFeedbackEntries } from "@/lib/pilot-feedback-storage";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Pilot feedback",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 function getSeverityClass(severity: string) {
   switch (severity) {
