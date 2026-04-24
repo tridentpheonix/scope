@@ -11,6 +11,8 @@ import { readProposalMemory } from "@/lib/proposal-memory";
 import { applySavedProposalPackClientBlocks, createProposalPackDraft } from "@/lib/proposal-pack";
 import { readProposalPackRecord } from "@/lib/proposal-pack-storage";
 import { readRiskCheckSubmissionById } from "@/lib/risk-check-storage";
+import { markOnboardingStep } from "@/lib/workspace-onboarding";
+import { readWorkspaceBrandSettings } from "@/lib/workspace-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,9 @@ type ProposalPackPageProps = {
 
 export default async function ProposalPackPage({ params }: ProposalPackPageProps) {
   const authContext = await getCurrentWorkspaceContext();
+  if (!authContext.workspace) {
+    throw new Error("Workspace was not initialized for this account.");
+  }
   const { id } = await params;
   const submission = await readRiskCheckSubmissionById(id, undefined, authContext.workspace?.id);
 
@@ -40,6 +45,10 @@ export default async function ProposalPackPage({ params }: ProposalPackPageProps
   const proposalMemory = await readProposalMemory(id, 3, undefined, authContext.workspace?.id);
   const generatedDraft = createProposalPackDraft(submission);
   const savedReview = await readExtractionReviewRecord(id, undefined, authContext.workspace?.id);
+  const brandSettings = await readWorkspaceBrandSettings(authContext.workspace.id);
+  if (authContext.workspace?.id) {
+    await markOnboardingStep(authContext.workspace.id, "generate-proposal-pack");
+  }
   const reviewedDraft = savedReview
     ? applyExtractionReviewOverridesToProposalDraft(generatedDraft, savedReview.review)
     : generatedDraft;
@@ -75,6 +84,7 @@ export default async function ProposalPackPage({ params }: ProposalPackPageProps
           changeOrderSavedAt={changeOrderDraft?.updatedAt ?? null}
           proposalMemory={proposalMemory}
           canUsePremiumExport={canUseBrandedExport(authContext.workspace?.planKey)}
+          brandSettings={brandSettings}
         />
       </section>
     </main>

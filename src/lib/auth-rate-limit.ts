@@ -5,7 +5,9 @@ export type AuthRateLimitScope =
   | "auth_sign_in_ip"
   | "auth_sign_in_email"
   | "auth_sign_up_ip"
-  | "auth_sign_up_email";
+  | "auth_sign_up_email"
+  | "auth_password_reset_ip"
+  | "auth_password_reset_email";
 
 export type AuthRateLimitRule = {
   scope: AuthRateLimitScope;
@@ -55,6 +57,10 @@ export const AUTH_RATE_LIMIT_RULES = {
   signUp: {
     ip: { scope: "auth_sign_up_ip", limit: 5, windowMs: 60 * 60 * 1000 },
     email: { scope: "auth_sign_up_email", limit: 3, windowMs: 60 * 60 * 1000 },
+  },
+  passwordReset: {
+    ip: { scope: "auth_password_reset_ip", limit: 6, windowMs: 60 * 60 * 1000 },
+    email: { scope: "auth_password_reset_email", limit: 3, windowMs: 60 * 60 * 1000 },
   },
 } as const;
 

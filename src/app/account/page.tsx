@@ -4,10 +4,15 @@ import { BillingActions } from "@/components/billing-actions";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteHeader } from "@/components/site-header";
 import { PasswordChangeForm } from "@/components/password-change-form";
+import { TeamManagement } from "@/components/team-management";
+import { WorkspaceBrandForm } from "@/components/workspace-brand-form";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
 import { getPlanLabel, isPaidPlan } from "@/lib/billing-gates";
 import { canAccessOpsDashboard } from "@/lib/operator-access";
 import { canUseStripeBilling } from "@/lib/stripe";
+import { markOnboardingStep } from "@/lib/workspace-onboarding";
+import { readWorkspaceBrandSettings } from "@/lib/workspace-settings";
+import { getMembershipForUser, readWorkspaceTeam } from "@/lib/workspace-team";
 
 export const dynamic = "force-dynamic";
 
@@ -20,22 +25,32 @@ export const metadata: Metadata = {
 };
 
 type AccountPageProps = {
-  searchParams?:
+      searchParams?:
     | {
         ops?: string;
+        team?: string;
       }
     | Promise<{
         ops?: string;
+        team?: string;
       }>;
 };
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
   const authContext = await getCurrentWorkspaceContext();
   const workspace = authContext.workspace;
+  if (!workspace) {
+    throw new Error("Workspace was not initialized for this account.");
+  }
   const currentPlan = getPlanLabel(workspace?.planKey);
   const isPaid = isPaidPlan(workspace?.planKey);
+  const brandSettings = await readWorkspaceBrandSettings(workspace.id);
+  const team = await readWorkspaceTeam(workspace.id);
+  const membership = await getMembershipForUser(workspace.id, authContext.user.id);
+  await markOnboardingStep(workspace.id, "visit-account");
   const resolvedSearchParams = await searchParams;
   const opsDenied = resolvedSearchParams?.ops === "denied";
+  const teamJoined = resolvedSearchParams?.team === "joined";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">
@@ -66,6 +81,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-7 text-amber-950">
             <strong className="block text-base">Ops dashboard access denied.</strong>
             This account is signed in, but it is not on the operator allowlist for /ops.
+          </div>
+        ) : null}
+
+        {teamJoined ? (
+          <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-7 text-emerald-950">
+            <strong className="block text-base">Workspace invite accepted.</strong>
+            You can now use this ScopeOS workspace with your account.
           </div>
         ) : null}
 
@@ -197,6 +219,44 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                   )}
                 </div>
                 <SignOutButton />
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
+              <div className="grid gap-4">
+                <div>
+                  <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Brand settings
+                  </div>
+                  <h2
+                    className="m-0 mt-2 text-2xl font-semibold text-slate-950"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    Proposal export branding.
+                  </h2>
+                </div>
+                <WorkspaceBrandForm initialSettings={brandSettings} canExport={isPaid} />
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
+              <div className="grid gap-4">
+                <div>
+                  <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Team
+                  </div>
+                  <h2
+                    className="m-0 mt-2 text-2xl font-semibold text-slate-950"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    Invite teammates.
+                  </h2>
+                </div>
+                <TeamManagement
+                  initialMembers={team.members}
+                  initialInvitations={team.invitations}
+                  canManage={membership?.role === "owner" || membership?.role === "admin"}
+                />
               </div>
             </div>
           </div>

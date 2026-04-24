@@ -185,6 +185,46 @@ const mongoIndexes: IndexSpec[] = [
     index: { workspaceId: 1, submissionId: 1, createdAt: -1 },
     options: { name: "pilot_feedback_workspace_submission_recent" },
   },
+  {
+    collection: "workspace_settings",
+    index: { workspaceId: 1 },
+    options: { unique: true, name: "workspace_settings_workspace_unique" },
+  },
+  {
+    collection: "workspace_onboarding",
+    index: { workspaceId: 1 },
+    options: { unique: true, name: "workspace_onboarding_workspace_unique" },
+  },
+  {
+    collection: "workspace_invitations",
+    index: { tokenHash: 1 },
+    options: { unique: true, name: "workspace_invitations_token_hash_unique" },
+  },
+  {
+    collection: "workspace_invitations",
+    index: { workspaceId: 1, emailNormalized: 1, createdAt: -1 },
+    options: { name: "workspace_invitations_workspace_email_recent" },
+  },
+  {
+    collection: "workspace_invitations",
+    index: { expiresAt: 1 },
+    options: { expireAfterSeconds: 0, name: "workspace_invitations_expires_ttl" },
+  },
+  {
+    collection: "password_reset_tokens",
+    index: { tokenHash: 1 },
+    options: { unique: true, name: "password_reset_tokens_token_hash_unique" },
+  },
+  {
+    collection: "password_reset_tokens",
+    index: { emailNormalized: 1, createdAt: -1 },
+    options: { name: "password_reset_tokens_email_recent" },
+  },
+  {
+    collection: "password_reset_tokens",
+    index: { expiresAt: 1 },
+    options: { expireAfterSeconds: 0, name: "password_reset_tokens_expires_ttl" },
+  },
 ];
 
 type MongoIndexInfoLike = {

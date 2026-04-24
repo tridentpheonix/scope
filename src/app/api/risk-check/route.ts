@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentWorkspaceContextOrNull } from "@/lib/auth/server";
 import { recordDiagnostic } from "@/lib/diagnostics";
 import { submitRiskCheck } from "@/lib/risk-check-service";
+import { markOnboardingStep } from "@/lib/workspace-onboarding";
 
 export const runtime = "nodejs";
 
@@ -74,6 +75,10 @@ export async function POST(request: Request) {
       hasAttachment: Boolean(result.submission.attachment),
       pricingConfidence: result.preview.pricingConfidence,
     });
+
+    if (authContext.workspace?.id) {
+      await markOnboardingStep(authContext.workspace.id, "create-risk-check");
+    }
 
     return NextResponse.json(
       { ok: true, id: result.submission.id, analysisPreview: result.preview },

@@ -28,6 +28,8 @@ export const appEnv = {
   observabilityWebhookSecret: readEnv("OBSERVABILITY_WEBHOOK_SECRET"),
   alertWebhookUrl: readEnv("ALERT_WEBHOOK_URL"),
   alertWebhookSecret: readEnv("ALERT_WEBHOOK_SECRET"),
+  resendApiKey: readEnv("RESEND_API_KEY"),
+  resendFromEmail: readEnv("RESEND_FROM_EMAIL"),
   cronSecret: readEnv("CRON_SECRET"),
   opsOperatorEmails: readEnv("OPS_OPERATOR_EMAILS"),
 };

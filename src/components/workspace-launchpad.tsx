@@ -5,11 +5,14 @@ import { getPlanLabel } from "@/lib/billing-gates";
 import { formatDateTimeLabel } from "@/lib/risk-check-presenters";
 import type { SavedDealSummary } from "@/lib/saved-deals";
 import { getWorkspaceLaunchpadAction } from "@/lib/workspace-launchpad";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
+import type { WorkspaceOnboardingRecord } from "@/lib/workspace-onboarding";
 
 type WorkspaceLaunchpadProps = {
   workspaceName: string;
   planKey: ScopePlanKey | null | undefined;
   deals: SavedDealSummary[];
+  onboarding: WorkspaceOnboardingRecord | null;
 };
 
 function getLatestTouchedLabel(deals: SavedDealSummary[]) {
@@ -24,6 +27,7 @@ export function WorkspaceLaunchpad({
   workspaceName,
   planKey,
   deals,
+  onboarding,
 }: WorkspaceLaunchpadProps) {
   const planLabel = getPlanLabel(planKey);
   const action = getWorkspaceLaunchpadAction(deals);
@@ -239,6 +243,8 @@ export function WorkspaceLaunchpad({
             This workspace view is the first step toward a fuller command center: better onboarding,
             clearer empty states, and stronger verification so real users can trust the flow.
           </div>
+
+          {onboarding ? <OnboardingChecklist initialRecord={onboarding} /> : null}
         </div>
       </div>
     </section>

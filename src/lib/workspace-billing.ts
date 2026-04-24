@@ -30,7 +30,7 @@ type WorkspaceMembershipDocument = {
   _id: string;
   workspaceId: string;
   userId: string;
-  role: "owner" | "member";
+  role: "owner" | "admin" | "member";
   createdAt: string;
 };
 

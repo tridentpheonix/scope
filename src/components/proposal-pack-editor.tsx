@@ -19,6 +19,7 @@ import {
   buildProposalPackHtml,
   buildProposalPackMarkdown,
   type ProposalPackBlock,
+  type ProposalPackBrandSettings,
   type ProposalPackDraft,
   type ProposalPackTheme,
 } from "@/lib/proposal-pack";
@@ -34,6 +35,7 @@ type ProposalPackEditorProps = {
   changeOrderSavedAt: string | null;
   proposalMemory: ProposalMemoryItem[];
   canUsePremiumExport: boolean;
+  brandSettings: ProposalPackBrandSettings;
 };
 
 function getInitialBodies(draft: ProposalPackDraft) {
@@ -48,6 +50,7 @@ export function ProposalPackEditor({
   changeOrderSavedAt,
   proposalMemory,
   canUsePremiumExport,
+  brandSettings,
 }: ProposalPackEditorProps) {
   const router = useRouter();
   const storageKey = `scopeos-proposal-pack:${submissionId}`;
@@ -312,7 +315,12 @@ export function ProposalPackEditor({
   }
 
   function openBrandedExport() {
-    const html = buildProposalPackHtml(buildDraftWithEdits(), exportTheme);
+    void fetch("/api/workspace/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ step: "try-branded-export" }),
+    });
+    const html = buildProposalPackHtml(buildDraftWithEdits(), exportTheme, brandSettings);
     const popup = window.open("", "_blank");
     if (!popup) {
       setStatus("Pop-up blocked. Allow pop-ups to open the branded export.");
@@ -335,7 +343,12 @@ export function ProposalPackEditor({
 
   function downloadBrandedHtml() {
     try {
-      const html = buildProposalPackHtml(buildDraftWithEdits(), exportTheme);
+      void fetch("/api/workspace/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ step: "try-branded-export" }),
+      });
+      const html = buildProposalPackHtml(buildDraftWithEdits(), exportTheme, brandSettings);
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");

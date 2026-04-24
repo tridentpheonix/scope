@@ -6,6 +6,7 @@ import { getCurrentWorkspaceContext } from "@/lib/auth/server";
 import { createExtractionReviewDraft } from "@/lib/extraction-review";
 import { readExtractionReviewRecord } from "@/lib/extraction-review-storage";
 import { readRiskCheckSubmissionById } from "@/lib/risk-check-storage";
+import { markOnboardingStep } from "@/lib/workspace-onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,9 @@ export default async function ExtractionReviewPage({
   const generatedDraft = createExtractionReviewDraft(submission);
   const savedReview = await readExtractionReviewRecord(id, undefined, authContext.workspace?.id);
   const draft = savedReview?.review ?? generatedDraft;
+  if (authContext.workspace?.id) {
+    await markOnboardingStep(authContext.workspace.id, "review-extraction");
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">

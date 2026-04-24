@@ -142,7 +142,14 @@ export function AuthPanel({ canUseGoogle = false }: AuthPanelProps) {
         </label>
 
         <label className="grid gap-2 text-sm font-medium text-slate-800">
-          Password
+          <span className="flex items-center justify-between gap-3">
+            Password
+            {mode === "sign-in" ? (
+              <a href="/auth/forgot-password" className="text-xs font-semibold text-sky-700 underline underline-offset-4">
+                Forgot?
+              </a>
+            ) : null}
+          </span>
           <input
             className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-950"
             type="password"

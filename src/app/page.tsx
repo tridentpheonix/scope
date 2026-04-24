@@ -5,6 +5,7 @@ import { WorkspaceLaunchpad } from "@/components/workspace-launchpad";
 import { getCurrentWorkspaceContextOrNull } from "@/lib/auth/server";
 import { readSavedDealSummaries } from "@/lib/saved-deals";
 import { getSiteUrl, siteConfig } from "@/lib/site";
+import { readWorkspaceOnboarding } from "@/lib/workspace-onboarding";
 
 const painPoints = [
   "You waste 2–6 hours turning call notes into a proposal draft.",
@@ -73,6 +74,9 @@ export default async function HomePage() {
   const deals = authContext?.workspace?.id
     ? await readSavedDealSummaries(undefined, authContext.workspace.id)
     : [];
+  const onboarding = authContext?.workspace?.id
+    ? await readWorkspaceOnboarding(authContext.workspace.id)
+    : null;
 
   if (authContext?.user) {
     return (
@@ -82,6 +86,7 @@ export default async function HomePage() {
           workspaceName={authContext.workspace?.name ?? "Your ScopeOS workspace"}
           planKey={authContext.workspace?.planKey}
           deals={deals}
+          onboarding={onboarding}
         />
       </main>
     );

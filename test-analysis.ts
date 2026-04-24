@@ -1,4 +1,5 @@
 import { analyzeRiskCheckSubmission } from "./src/lib/risk-check-analysis";
+import type { RiskCheckInput } from "./src/lib/risk-check-schema";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -6,18 +7,18 @@ async function runTest(fileName: string) {
   const filePath = path.join(process.cwd(), "samples", fileName);
   const content = fs.readFileSync(filePath, "utf-8");
 
-  const input = {
+  const input: RiskCheckInput = {
     name: "Test User",
     email: "test@example.com",
     agencyName: "Test Agency",
     websiteUrl: "https://example.com",
     projectType: fileName.includes("redesign") ? "marketing-redesign" : "other",
-    briefSource: "sample_file",
+    briefSource: "other",
     summary: content,
     consent: true,
   };
 
-  const analysis = analyzeRiskCheckSubmission(input as any);
+  const analysis = analyzeRiskCheckSubmission(input);
 
   console.log(`\n==================================================`);
   console.log(`TESTING: ${fileName}`);

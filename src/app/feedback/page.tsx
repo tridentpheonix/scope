@@ -5,6 +5,7 @@ import { PilotFeedbackForm } from "@/components/pilot-feedback-form";
 import { getCurrentWorkspaceContext } from "@/lib/auth/server";
 import { formatDateTimeLabel } from "@/lib/risk-check-presenters";
 import { readPilotFeedbackEntries } from "@/lib/pilot-feedback-storage";
+import { markOnboardingStep } from "@/lib/workspace-onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,9 @@ function getSeverityClass(severity: string) {
 export default async function FeedbackPage() {
   const authContext = await getCurrentWorkspaceContext();
   const workspaceId = authContext.workspace?.id;
+  if (workspaceId) {
+    await markOnboardingStep(workspaceId, "submit-feedback");
+  }
   const feedbackItems = await readPilotFeedbackEntries(undefined, workspaceId, 5);
 
   return (

@@ -61,6 +61,15 @@ export async function SiteHeader({
               <Link href="/#how-it-works" className="transition hover:text-white">
                 How it works
               </Link>
+              <Link href="/demo" className="transition hover:text-white">
+                Demo
+              </Link>
+              <Link href="/sample-proposal-pack" className="transition hover:text-white">
+                Sample
+              </Link>
+              <Link href="/compare" className="transition hover:text-white">
+                Compare
+              </Link>
               <Link href="/pricing" className="transition hover:text-white">
                 Pricing
               </Link>
