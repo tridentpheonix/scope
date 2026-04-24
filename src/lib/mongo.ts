@@ -106,6 +106,11 @@ const mongoIndexes: IndexSpec[] = [
     options: { expireAfterSeconds: 0, name: "stripe_webhook_events_expires_ttl" },
   },
   {
+    collection: "stripe_webhook_events",
+    index: { updatedAt: -1 },
+    options: { name: "stripe_webhook_events_recent" },
+  },
+  {
     collection: "background_tasks",
     index: { status: 1, runAfter: 1, createdAt: 1 },
     options: { name: "background_tasks_pending_due" },

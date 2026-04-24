@@ -113,6 +113,7 @@ pnpm eval:ai
 - [x] Confirm Google sign-in is enabled in production
 - [x] Confirm `APP_BASE_URL` is set for production
 - [x] Confirm `/support`, `/ops`, and `/api/health` are part of the launch operator flow
+- [x] Confirm Stripe webhook replay safety with `pnpm smoke:stripe-webhook`
 
 ## Known limits
 
@@ -120,7 +121,8 @@ pnpm eval:ai
 - The local dev auth session cookie is a QA convenience and should remain dev-only.
 - The AI timeout is intentionally bounded so slow live generation falls back instead of hanging the browser flow.
 - Password reset email is not enabled yet; use manual recovery during the pilot.
-- Observability and alert webhook URLs need real destinations before incident notifications are active.
+- `/ops` now includes an internal billing webhook ledger for paid-launch triage.
+- Observability and alert webhook URLs still need real external destinations before out-of-app incident notifications are active.
 
 ## Handoff notes
 

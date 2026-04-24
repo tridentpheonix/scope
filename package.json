@@ -17,7 +17,8 @@
     "attachments:reconcile": "tsx scripts/reconcile-orphan-attachments.ts",
     "smoke:browser": "node scripts/browser-smoke.js",
     "smoke:launch": "node scripts/live-launch-smoke.js",
-    "eval:ai": "tsx scripts/ai-eval.ts"
+    "eval:ai": "tsx scripts/ai-eval.ts",
+    "smoke:stripe-webhook": "node scripts/live-stripe-webhook-replay-smoke.js"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.3",

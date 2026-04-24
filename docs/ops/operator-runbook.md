@@ -48,6 +48,21 @@ If no reviewed recovery utility exists, prefer Google sign-in or create a replac
 
 Webhook handling is expected to be idempotent: replayed processed events should not duplicate billing state.
 
+For a live endpoint replay smoke that does not change a real subscription, run:
+
+```powershell
+$env:LIVE_STRIPE_WEBHOOK_SECRET="<production webhook signing secret>"
+pnpm smoke:stripe-webhook
+```
+
+Expected result:
+
+- the first synthetic event returns `ok: true`
+- the replay of the same event returns `duplicate: true`
+- `/ops` shows the processed event in the billing webhook ledger
+
+Never paste the webhook secret into chat or commit it to the repo.
+
 ## 5. Restore data drill
 
 Use Atlas native backup/restore for production recovery.

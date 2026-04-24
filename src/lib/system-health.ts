@@ -6,7 +6,9 @@ import {
   isOpsAccessConfigured,
   isObservabilityConfigured,
   isMaintenanceCronConfigured,
+  isStripeCheckoutConfigured,
   isStripeConfigured,
+  isStripeWebhookConfigured,
 } from "./env";
 import { pingMongo } from "./mongo";
 
@@ -27,6 +29,8 @@ export type SystemHealthSnapshot = {
     };
     stripe: {
       configured: boolean;
+      checkoutConfigured: boolean;
+      webhookConfigured: boolean;
     };
     blob: {
       configured: boolean;
@@ -91,6 +95,8 @@ export async function getSystemHealthSnapshot(options: SystemHealthOptions = {})
       },
       stripe: {
         configured: isStripeConfigured(),
+        checkoutConfigured: isStripeCheckoutConfigured(),
+        webhookConfigured: isStripeWebhookConfigured(),
       },
       blob: {
         configured: isBlobStorageConfigured(),

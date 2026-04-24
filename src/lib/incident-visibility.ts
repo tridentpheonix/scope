@@ -2,6 +2,7 @@ import type { DiagnosticEntry } from "./diagnostics";
 import { isMongoConfigured } from "./env";
 import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 import { getSystemHealthSnapshot, type SystemHealthSnapshot } from "./system-health";
+import { getRecentStripeWebhookEvents, type StripeWebhookEventSummary } from "./stripe-webhook-events";
 import type { Collection } from "mongodb";
 
 export type IncidentVisibilityDiagnostic = DiagnosticEntry & {
@@ -80,19 +81,23 @@ export async function getRecentIncidentDiagnostics(limit = 8): Promise<IncidentV
 export type IncidentVisibilitySnapshot = {
   health: SystemHealthSnapshot;
   recentDiagnostics: IncidentVisibilityDiagnostic[];
+  recentStripeWebhookEvents: StripeWebhookEventSummary[];
 };
 
 export async function getIncidentVisibilitySnapshot(options: {
   recentLimit?: number;
   healthNow?: Date;
 } = {}): Promise<IncidentVisibilitySnapshot> {
-  const [health, recentDiagnostics] = await Promise.all([
+  const recentLimit = options.recentLimit;
+  const [health, recentDiagnostics, recentStripeWebhookEvents] = await Promise.all([
     getSystemHealthSnapshot({ now: options.healthNow }),
-    getRecentIncidentDiagnostics(options.recentLimit),
+    getRecentIncidentDiagnostics(recentLimit),
+    getRecentStripeWebhookEvents(recentLimit),
   ]);
 
   return {
     health,
     recentDiagnostics,
+    recentStripeWebhookEvents,
   };
 }

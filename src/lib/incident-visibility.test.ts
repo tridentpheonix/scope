@@ -26,7 +26,7 @@ const mongoMock = vi.hoisted(() => {
       checks: {
         mongo: { configured: true, ok: true, latencyMs: 12, error: null },
         auth: { configured: true, ok: true },
-        stripe: { configured: true },
+        stripe: { configured: true, checkoutConfigured: true, webhookConfigured: true },
         blob: { configured: false },
         observability: { configured: true },
         alerting: { configured: true },
@@ -43,6 +43,23 @@ vi.mock("./mongo", () => ({
 
 vi.mock("./system-health", () => ({
   getSystemHealthSnapshot: mongoMock.getSystemHealthSnapshot,
+}));
+
+vi.mock("./stripe-webhook-events", () => ({
+  getRecentStripeWebhookEvents: vi.fn(async () => [
+    {
+      id: "evt_1",
+      eventType: "customer.subscription.updated",
+      status: "processed",
+      attemptCount: 1,
+      firstSeenAt: "2026-04-22T00:00:00.000Z",
+      lastAttemptAt: "2026-04-22T00:00:00.000Z",
+      updatedAt: "2026-04-22T00:00:00.000Z",
+      processedAt: "2026-04-22T00:00:00.000Z",
+      failedAt: null,
+      lastError: null,
+    },
+  ]),
 }));
 
 afterEach(() => {
@@ -103,6 +120,11 @@ describe("incident visibility", () => {
       level: "error",
       area: "billing",
       event: "billing_checkout_failed",
+    });
+    expect(snapshot.recentStripeWebhookEvents[0]).toMatchObject({
+      id: "evt_1",
+      status: "processed",
+      eventType: "customer.subscription.updated",
     });
   });
 });

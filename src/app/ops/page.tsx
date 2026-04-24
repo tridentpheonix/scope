@@ -26,7 +26,7 @@ function statusDot(ok: boolean) {
 export default async function OpsPage() {
   const authContext = await getCurrentOperatorContext();
   const snapshot = await getIncidentVisibilitySnapshot({ recentLimit: 8 });
-  const { health, recentDiagnostics } = snapshot;
+  const { health, recentDiagnostics, recentStripeWebhookEvents } = snapshot;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(69,137,255,0.14),transparent_24%),linear-gradient(180deg,#eef4fb_0%,#f8fbff_40%,#eef3fa_100%)] text-slate-950">
@@ -77,7 +77,15 @@ export default async function OpsPage() {
               {[
                 ["MongoDB", health.checks.mongo.configured && health.checks.mongo.ok, health.checks.mongo.ok ? `Latency ${health.checks.mongo.latencyMs ?? "?"}ms` : health.checks.mongo.error ?? "Not reachable"],
                 ["Auth", health.checks.auth.configured && health.checks.auth.ok, health.checks.auth.ok ? "Sign-in ready" : "Auth is unavailable"],
-                ["Stripe", health.checks.stripe.configured, health.checks.stripe.configured ? "Billing configured" : "Billing env missing"],
+                [
+                  "Stripe",
+                  health.checks.stripe.checkoutConfigured && health.checks.stripe.webhookConfigured,
+                  health.checks.stripe.checkoutConfigured && health.checks.stripe.webhookConfigured
+                    ? "Checkout + webhooks configured"
+                    : health.checks.stripe.checkoutConfigured
+                      ? "Checkout ready; webhook secret missing"
+                      : "Billing env missing",
+                ],
                 ["Maintenance", health.checks.maintenance.configured, health.checks.maintenance.configured ? "Cron secret configured" : "Cron secret missing"],
                 ["Observability", health.checks.observability.configured, health.checks.observability.configured ? "Webhook configured" : "Not configured"],
                 ["Alerting", health.checks.alerting.configured, health.checks.alerting.configured ? "Critical alerts enabled" : "Not configured"],
@@ -142,6 +150,65 @@ export default async function OpsPage() {
                     Pricing
                   </Link>
                 </div>
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
+              <div className="grid gap-4">
+                <div>
+                  <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Billing webhook ledger
+                  </div>
+                  <h2
+                    className="m-0 mt-2 text-2xl font-semibold text-slate-950"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    Recent Stripe event handling.
+                  </h2>
+                </div>
+
+                {recentStripeWebhookEvents.length > 0 ? (
+                  <div className="grid gap-3">
+                    {recentStripeWebhookEvents.map((entry) => (
+                      <article key={entry.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+                            <span
+                              className={`size-2 rounded-full ${
+                                entry.status === "processed"
+                                  ? "bg-emerald-500"
+                                  : entry.status === "failed"
+                                    ? "bg-rose-500"
+                                    : "bg-amber-500"
+                              }`}
+                            />
+                            {entry.status.toUpperCase()}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            Attempts: {entry.attemptCount}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 text-sm font-semibold text-slate-950">
+                          {entry.eventType}
+                        </div>
+                        <div className="mt-2 break-all text-xs text-slate-500">
+                          {entry.id}
+                        </div>
+                        <div className="mt-3 grid gap-1 text-xs text-slate-500">
+                          <div>Last attempt: {new Date(entry.lastAttemptAt).toLocaleString()}</div>
+                          {entry.processedAt ? <div>Processed: {new Date(entry.processedAt).toLocaleString()}</div> : null}
+                          {entry.failedAt ? <div>Failed: {new Date(entry.failedAt).toLocaleString()}</div> : null}
+                          {entry.lastError?.message ? <div>Error: {entry.lastError.message}</div> : null}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-700">
+                    No Stripe webhook events have been recorded yet. After checkout or a replay smoke, this panel should show processed events.
+                  </div>
+                )}
               </div>
             </div>
 

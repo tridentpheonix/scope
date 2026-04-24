@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { isMongoConfigured } from "./env";
 import { ensureMongoIndexes, getMongoCollection } from "./mongo";
 
 export type StripeWebhookEventStatus = "processing" | "processed" | "failed";
@@ -21,6 +22,19 @@ type StripeWebhookEventDocument = {
   processedAt: string | null;
   failedAt: string | null;
   expiresAt: Date;
+  lastError: StripeWebhookEventError | null;
+};
+
+export type StripeWebhookEventSummary = {
+  id: string;
+  eventType: string;
+  status: StripeWebhookEventStatus;
+  attemptCount: number;
+  firstSeenAt: string;
+  lastAttemptAt: string;
+  updatedAt: string;
+  processedAt: string | null;
+  failedAt: string | null;
   lastError: StripeWebhookEventError | null;
 };
 
@@ -89,6 +103,32 @@ async function getStripeWebhookEventsCollection() {
   return getMongoCollection<StripeWebhookEventDocument>("stripe_webhook_events");
 }
 
+export async function getRecentStripeWebhookEvents(limit = 8): Promise<StripeWebhookEventSummary[]> {
+  if (!isMongoConfigured()) {
+    return [];
+  }
+
+  const collection = await getStripeWebhookEventsCollection();
+  const records = await collection
+    .find({})
+    .sort({ updatedAt: -1 })
+    .limit(Math.max(1, Math.min(limit, 20)))
+    .toArray();
+
+  return records.map((record) => ({
+    id: record._id,
+    eventType: record.eventType,
+    status: record.status,
+    attemptCount: record.attemptCount,
+    firstSeenAt: record.firstSeenAt,
+    lastAttemptAt: record.lastAttemptAt,
+    updatedAt: record.updatedAt,
+    processedAt: record.processedAt,
+    failedAt: record.failedAt,
+    lastError: record.lastError,
+  }));
+}
+
 export async function reserveStripeWebhookEvent(event: Stripe.Event): Promise<StripeWebhookReservation> {
   const collection = await getStripeWebhookEventsCollection();
   const now = new Date();
@@ -110,12 +150,9 @@ export async function reserveStripeWebhookEvent(event: Stripe.Event): Promise<St
         $setOnInsert: {
           createdAt: nowIso,
           firstSeenAt: nowIso,
-          attemptCount: 0,
+          attemptCount: 1,
           processedAt: null,
           failedAt: null,
-        },
-        $inc: {
-          attemptCount: 1,
         },
       },
       { upsert: true },
@@ -127,6 +164,20 @@ export async function reserveStripeWebhookEvent(event: Stripe.Event): Promise<St
         eventId: event.id,
         reason: "processed",
       };
+    }
+
+    if (result.modifiedCount > 0 && result.upsertedCount === 0) {
+      await collection.updateOne(
+        { _id: event.id },
+        {
+          $inc: {
+            attemptCount: 1,
+          },
+          $set: {
+            updatedAt: nowIso,
+          },
+        },
+      );
     }
 
     const saved = await collection.findOne({ _id: event.id });
