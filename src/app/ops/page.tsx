@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OpsAlertTest } from "@/components/ops-alert-test";
 import { SiteHeader } from "@/components/site-header";
 import { getIncidentVisibilitySnapshot } from "@/lib/incident-visibility";
 import { getCurrentOperatorContext } from "@/lib/operator-access";
@@ -152,6 +153,8 @@ export default async function OpsPage() {
                 </div>
               </div>
             </div>
+
+            <OpsAlertTest />
 
             <div className="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm">
               <div className="grid gap-4">

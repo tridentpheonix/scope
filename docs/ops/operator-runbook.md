@@ -16,7 +16,25 @@ Expected:
 - Stripe is configured before paid checkout is promoted
 - `/ops` is visible only to emails in `OPS_OPERATOR_EMAILS`
 
-## 2. Triage failed sign-in
+## 2. Test alert delivery
+
+Open `/ops` and use **Send alert test**.
+
+Expected:
+
+- the app records an `ops_alert_self_test` diagnostic
+- if `ALERT_WEBHOOK_URL` is configured, the external alert destination receives it
+- if `OBSERVABILITY_WEBHOOK_URL` is configured, the observability destination receives it
+- the event appears in the `/ops` recent incidents list after refresh
+
+If the button says alerting is not configured, add the external destination env vars in Vercel first:
+
+- `OBSERVABILITY_WEBHOOK_URL`
+- `OBSERVABILITY_WEBHOOK_SECRET`
+- `ALERT_WEBHOOK_URL`
+- `ALERT_WEBHOOK_SECRET`
+
+## 3. Triage failed sign-in
 
 1. Ask whether the user used Google or email/password.
 2. If email/password fails repeatedly, check for rate limiting and wait for the retry window.
@@ -24,7 +42,7 @@ Expected:
 4. If recovery is still needed, verify the user out of band before changing anything.
 5. Do not disable rate limiting to fix a single support issue.
 
-## 3. Manual password recovery
+## 4. Manual password recovery
 
 Password reset email is intentionally not enabled yet.
 
@@ -38,7 +56,7 @@ Pilot-safe recovery process:
 
 If no reviewed recovery utility exists, prefer Google sign-in or create a replacement account rather than editing auth documents by hand.
 
-## 4. Confirm Stripe webhook status
+## 5. Confirm Stripe webhook status
 
 1. Open the Stripe dashboard.
 2. Inspect the latest events for `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`.
@@ -63,7 +81,7 @@ Expected result:
 
 Never paste the webhook secret into chat or commit it to the repo.
 
-## 5. Restore data drill
+## 6. Restore data drill
 
 Use Atlas native backup/restore for production recovery.
 
